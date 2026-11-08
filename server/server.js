@@ -11,6 +11,12 @@ const errorHandler = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+logger.info(`====================================================`);
+logger.info(`🚀 Starting ImageGallery 3.0 Server Initialization`);
+logger.info(`🕒 Start Time: ${new Date().toISOString()}`);
+logger.info(`💻 Node Version: ${process.version} | Platform: ${process.platform}`);
+logger.info(`====================================================`);
+
 // Connect to database
 connectDB();
 
@@ -23,7 +29,26 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("combined", { stream: { write: (message) => logger.info(message.trim()) } }));
+
+// Detailed HTTP Request Logging from Start to End
+app.use((req, res, next) => {
+  const start = Date.now();
+  const clientIP = req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || '127.0.0.1';
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const logMsg = `[HTTP] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${duration}ms) - IP: ${clientIP}`;
+    if (res.statusCode >= 500) {
+      logger.error(logMsg);
+    } else if (res.statusCode >= 400) {
+      logger.warn(logMsg);
+    } else {
+      logger.info(logMsg);
+    }
+  });
+
+  next();
+});
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -47,8 +72,33 @@ app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => res.send("Image Gallery API Running"));
 
+// Catch 404 routes
+app.use((req, res, next) => {
+  logger.warn(`[404 NOT FOUND] ${req.method} ${req.originalUrl} - IP: ${req.ip || '127.0.0.1'}`);
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+});
+
 // Error handling middleware
 app.use(errorHandler);
+
+// Global process exception & termination logging (Start to End lifecycle)
+process.on('uncaughtException', (err) => {
+  logger.error(`[UNCAUGHT EXCEPTION] ${err.message}`, { stack: err.stack });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error(`[UNHANDLED REJECTION] Reason: ${reason}`);
+});
+
+process.on('SIGTERM', () => {
+  logger.info(`🛑 SIGTERM signal received. Shutting down gracefully...`);
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  logger.info(`🛑 SIGINT (Ctrl+C) received. Server stopped.`);
+  process.exit(0);
+});
 
 // Bind to 0.0.0.0 to allow connections from all network interfaces
 app.listen(PORT, '0.0.0.0', () => {
