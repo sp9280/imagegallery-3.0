@@ -75,6 +75,44 @@ const extractMetadata = async (filePath) => {
       metadata.focalLength = Number(tags.FocalLength.toFixed(1));
     }
 
+    // Resolution from image tags or size
+    const imageSize = result.getImageSize ? result.getImageSize() : (result.imageSize || {});
+    if (imageSize.width && imageSize.height) {
+      metadata.resolution = `${imageSize.width}x${imageSize.height}`;
+    }
+
+    // Camera Type detection heuristic
+    const make = (metadata.cameraMake || '').toLowerCase();
+    const model = (metadata.cameraModel || '').toLowerCase();
+    if (make.includes('apple') || make.includes('samsung') || make.includes('google') || model.includes('pixel') || model.includes('iphone') || model.includes('galaxy') || model.includes('xiaomi') || model.includes('huawei')) {
+      metadata.cameraType = 'Smartphone';
+    } else if (make.includes('dji') || model.includes('drone') || model.includes('mavic') || model.includes('mini') || model.includes('autel')) {
+      metadata.cameraType = 'Drone';
+    } else if (model.includes('eos r') || model.includes('a7') || model.includes('a9') || model.includes('a1') || model.includes('z6') || model.includes('z7') || model.includes('z8') || model.includes('z9') || make.includes('fujifilm') || make.includes('leica') || make.includes('hasselblad')) {
+      metadata.cameraType = 'Mirrorless';
+    } else if (model.includes('mark') || model.includes('rebel') || model.includes('d850') || model.includes('d750') || model.includes('d5600')) {
+      metadata.cameraType = 'DSLR';
+    } else if (make || model) {
+      metadata.cameraType = 'Dedicated Camera';
+    }
+
+    // AI Generated detection heuristics
+    const software = String(tags.Software || '').toLowerCase();
+    const comment = String(tags.UserComment || tags.ImageDescription || '').toLowerCase();
+    const aiKeywords = ['midjourney', 'stable diffusion', 'dall-e', 'dalle', 'comfyui', 'novelai', 'firefly', 'civitai', 'flux.1', 'automatic1111', 'invokeai', 'ai generated'];
+    const isAi = aiKeywords.some(kw => software.includes(kw) || comment.includes(kw));
+    if (isAi) {
+      metadata.isAiGenerated = true;
+      if (software.includes('midjourney') || comment.includes('midjourney')) metadata.aiModel = 'Midjourney';
+      else if (software.includes('dall-e') || software.includes('dalle') || comment.includes('dall-e')) metadata.aiModel = 'DALL-E';
+      else if (software.includes('comfyui') || comment.includes('comfyui')) metadata.aiModel = 'ComfyUI';
+      else if (software.includes('stable diffusion') || comment.includes('stable diffusion')) metadata.aiModel = 'Stable Diffusion';
+      else if (software.includes('firefly') || comment.includes('firefly')) metadata.aiModel = 'Adobe Firefly';
+      else metadata.aiModel = 'Generative AI';
+    } else {
+      metadata.isAiGenerated = false;
+    }
+
     const latitude = normalizeCoordinate(tags.GPSLatitude, tags.GPSLatitudeRef);
     const longitude = normalizeCoordinate(tags.GPSLongitude, tags.GPSLongitudeRef);
     if (typeof latitude === 'number' && typeof longitude === 'number') {
@@ -108,11 +146,17 @@ const uploadMedia = async (req, res) => {
       tags = '',
       isPublic = true,
       license = 'CC-BY-4.0',
-      // New manual metadata fields
+      // Manual metadata fields (if filled, override auto-detected EXIF)
       photographer = '',
       location = '',
       camera = '',
-      resolution = ''
+      cameraType = '',
+      resolution = '',
+      captureDate = '',
+      aperture = '',
+      focalLength = '',
+      isAiGenerated,
+      aiModel = ''
     } = req.body;
     const userId = req.user.id;
 
@@ -173,6 +217,45 @@ const uploadMedia = async (req, res) => {
     // Add resolution
     if (resolution && resolution.trim()) {
       metadata.resolution = resolution.trim();
+    }
+
+    // Add camera type
+    if (cameraType && cameraType.trim()) {
+      metadata.cameraType = cameraType.trim();
+    }
+
+    // Add capture date
+    if (captureDate && captureDate.trim()) {
+      const d = new Date(captureDate.trim());
+      if (!Number.isNaN(d.getTime())) {
+        metadata.captureDate = d;
+      }
+    }
+
+    // Add aperture
+    if (aperture) {
+      const numAperture = parseFloat(String(aperture).replace(/f\/?/i, '').trim());
+      if (!Number.isNaN(numAperture)) {
+        metadata.aperture = numAperture;
+      }
+    }
+
+    // Add focal length / focus
+    if (focalLength) {
+      const numFocus = parseFloat(String(focalLength).replace(/mm/i, '').trim());
+      if (!Number.isNaN(numFocus)) {
+        metadata.focalLength = numFocus;
+      }
+    }
+
+    // AI generated flag
+    if (isAiGenerated !== undefined && isAiGenerated !== '') {
+      metadata.isAiGenerated = isAiGenerated === true || isAiGenerated === 'true';
+    }
+
+    // AI model
+    if (aiModel && aiModel.trim()) {
+      metadata.aiModel = aiModel.trim();
     }
     
     // Only keep metadata if it has any properties

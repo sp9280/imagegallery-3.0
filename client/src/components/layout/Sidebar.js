@@ -41,14 +41,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       {/* Slide-out Sidebar Drawer */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-r border-slate-200/80 dark:border-slate-800/80 z-50 shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
+        className={`fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white/95 dark:bg-[#070913]/95 backdrop-blur-2xl border-r border-slate-200/80 dark:border-white/10 z-50 shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 dark:border-slate-800/60">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200/60 dark:border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-400 via-violet-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
               <PhotoIcon className="w-5 h-5" />
             </div>
             <div>
@@ -62,7 +62,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </div>
           <button
             onClick={toggleSidebar}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             aria-label="Close sidebar"
           >
             <XMarkIcon className="w-5 h-5" />
@@ -80,14 +80,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <Link
                 to="/"
                 onClick={toggleSidebar}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isActive("/")
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white shadow-[0_0_20px_rgba(0,245,212,0.25)]"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                 }`}
               >
                 <HomeIcon className="w-5 h-5" />
-                <span>Explore Feed</span>
+                <span>Explore Showcase</span>
               </Link>
 
               {user && (
@@ -95,14 +95,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   <Link
                     to="/upload"
                     onClick={toggleSidebar}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       isActive("/upload")
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white shadow-[0_0_20px_rgba(0,245,212,0.25)]"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                     }`}
                   >
                     <CloudArrowUpIcon className="w-5 h-5" />
-                    <span>Upload Media</span>
+                    <span>Upload Studio</span>
                   </Link>
 
                   <Link

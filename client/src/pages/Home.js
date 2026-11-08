@@ -14,7 +14,8 @@ import {
   PhotoIcon,
   XMarkIcon,
   ArrowRightIcon,
-  FireIcon
+  CameraIcon,
+  CpuChipIcon
 } from "@heroicons/react/24/outline";
 
 const Home = () => {
@@ -26,6 +27,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'masonry'
   const [heroSearch, setHeroSearch] = useState("");
+  const [mediumFilter, setMediumFilter] = useState("all"); // 'all', 'optical', 'ai'
 
   const searchParams = new URLSearchParams(location.search);
   const currentCategory = searchParams.get("category") || "all";
@@ -93,148 +95,162 @@ const Home = () => {
   };
 
   const clearFilters = () => {
+    setMediumFilter("all");
     navigate("/");
   };
 
-  return (
-    <div className="space-y-12 pb-16">
-      {/* ========================================================
-          HERO SECTION (High-Impact Modern Visual Presentation)
-      ======================================================== */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white p-8 sm:p-12 md:p-16 shadow-2xl border border-indigo-500/20">
-        {/* Ambient Decorative Glow Lights */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(#4f46e5_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
+  // Filter media by medium type (Optical vs AI)
+  const filteredMedia = media.filter((item) => {
+    if (mediumFilter === "ai") return item.metadata?.isAiGenerated === true;
+    if (mediumFilter === "optical") return item.metadata?.isAiGenerated !== true;
+    return true;
+  });
 
-        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6">
-          {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-indigo-200 shadow-sm">
-            <SparklesIcon className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span>Discover ImageGallery 3.0 • The Creative Sanctuary</span>
+  return (
+    <div className="space-y-12 pb-20">
+      {/* ========================================================
+          HERO SECTION (Bespoke Aurora Cyber-Obsidian Look)
+      ======================================================== */}
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#070913] via-[#0e1222] to-[#080b18] text-white p-8 sm:p-14 md:p-20 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-white/10">
+        {/* Luminous Aurora Ambient Blurs */}
+        <div className="absolute top-0 right-1/4 w-[32rem] h-[32rem] bg-cyan-500/15 rounded-full blur-[110px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-[32rem] h-[32rem] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[100px] pointer-events-none" />
+        
+        {/* Subtle Cyber Grid Texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(#00f5d4_1px,transparent_1px)] [background-size:32px_32px] opacity-10 pointer-events-none" />
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center space-y-7">
+          {/* Holographic Badge */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/15 text-xs font-bold text-cyan-300 shadow-[0_0_20px_rgba(0,245,212,0.15)]">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f5d4]" />
+            <span>ImageGallery 3.0 • Intelligent Visual Sanctuary</span>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight">
-            Where Imagination Meets{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300">
-              Visual Perfection
+          {/* Majestic Headline */}
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1]">
+            Where Visual Art{" "}
+            <br className="hidden sm:inline" />
+            Transcends{" "}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-violet-400 to-pink-500 drop-shadow-sm">
+              Perfection.
             </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            Explore millions of curated high-resolution photographs, 3D renders, and digital art created by passionate creators around the globe.
+          <p className="text-sm sm:text-lg text-slate-300/90 leading-relaxed max-w-2xl mx-auto font-normal">
+            A sanctuary for high-resolution photography and generative artwork. Automatically enriched with camera optics, aperture, resolution, and AI classification.
           </p>
 
-          {/* Hero Search Box */}
+          {/* Modern Floating Hero Search */}
           <form
             onSubmit={handleHeroSearchSubmit}
-            className="pt-2 max-w-xl mx-auto flex items-center bg-white/10 dark:bg-slate-900/60 backdrop-blur-xl p-2 rounded-2xl border border-white/20 shadow-2xl focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/20 transition-all"
+            className="pt-2 max-w-2xl mx-auto flex items-center bg-white/5 dark:bg-slate-950/70 backdrop-blur-2xl p-2 rounded-2xl border border-white/15 shadow-[0_10px_35px_rgba(0,0,0,0.4)] focus-within:border-cyan-400 focus-within:shadow-[0_0_30px_rgba(0,245,212,0.25)] transition-all duration-300"
           >
-            <div className="pl-3 text-slate-300">
+            <div className="pl-4 text-cyan-400">
               <MagnifyingGlassIcon className="w-5 h-5" />
             </div>
             <input
               type="text"
               value={heroSearch}
               onChange={(e) => setHeroSearch(e.target.value)}
-              placeholder="Search high-res photos, themes, keywords..."
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none"
+              placeholder="Search Sony A7, f/1.8, Cyberpunk, 4K, Leica, or prompt keywords..."
+              className="flex-1 bg-transparent px-3 py-2.5 text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none"
             />
             {heroSearch && (
               <button
                 type="button"
                 onClick={() => setHeroSearch("")}
-                className="p-1 rounded-full text-slate-400 hover:text-white"
+                className="p-1 rounded-full text-slate-400 hover:text-white mr-1"
               >
                 <XMarkIcon className="w-4 h-4" />
               </button>
             )}
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-95 text-white font-semibold text-sm shadow-lg shadow-indigo-500/30 transition-all"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white font-bold text-sm shadow-[0_0_20px_rgba(0,245,212,0.3)] transition-all cursor-pointer"
             >
-              Search
+              Explore
             </button>
           </form>
 
-          {/* Live Platform Stats */}
-          <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/10 text-center">
-            <div>
-              <p className="text-2xl font-black text-white">10K+</p>
-              <p className="text-xs text-indigo-200">Curated Assets</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">45K+</p>
-              <p className="text-xs text-indigo-200">Global Artists</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">100%</p>
-              <p className="text-xs text-indigo-200">Free Downloads</p>
-            </div>
-            <div>
-              <p className="text-2xl font-black text-white">4K UHD</p>
-              <p className="text-xs text-indigo-200">Original Resolution</p>
-            </div>
+          {/* EXIF DNA Capabilities Pill Strip */}
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-300">
+            <span className="font-semibold text-slate-400">Auto-Detected DNA:</span>
+            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
+              📷 Camera & Lens
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
+              ⚡ F-Stop Aperture
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
+              📐 Resolution
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
+              📍 GPS Location
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
+              🤖 AI vs Optical
+            </span>
           </div>
         </div>
       </section>
 
       {/* ========================================================
-          FILTER & CATEGORY SELECTION BAR
+          DUAL-LAYER FILTER STRIP (Categories & AI/Optical Toggle)
       ======================================================== */}
       <section className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Category Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {categories.map((cat) => {
-              const isSelected =
-                currentCategory === cat.value ||
-                (!searchParams.get("category") && cat.value === "all");
-              return (
-                <button
-                  key={cat.value}
-                  onClick={() => handleCategorySelect(cat.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer ${
-                    isSelected
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/70 border border-slate-200 dark:border-slate-700"
-                  }`}
-                >
-                  <span>{cat.emoji}</span>
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
+        {/* Layer 1: Medium Filter (All / Optical Camera / AI Generated) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 dark:border-white/10 pb-4">
+          <div className="flex items-center gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 w-fit">
+            <button
+              onClick={() => setMediumFilter("all")}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                mediumFilter === "all"
+                  ? "bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              ✨ All Mediums
+            </button>
+            <button
+              onClick={() => setMediumFilter("optical")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                mediumFilter === "optical"
+                  ? "bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <CameraIcon className="w-3.5 h-3.5" />
+              <span>Optical Photography</span>
+            </button>
+            <button
+              onClick={() => setMediumFilter("ai")}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                mediumFilter === "ai"
+                  ? "bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white shadow-md"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <CpuChipIcon className="w-3.5 h-3.5" />
+              <span>AI Generated</span>
+            </button>
           </div>
 
-          {/* View Mode & Active Status */}
-          <div className="flex items-center justify-between md:justify-end gap-3 shrink-0">
-            {/* Active search tag */}
-            {currentSearch && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                <span>"{currentSearch}"</span>
-                <button
-                  onClick={clearFilters}
-                  className="hover:text-rose-500"
-                  title="Clear search"
-                >
-                  <XMarkIcon className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            )}
-
-            {/* View Grid Switcher */}
-            <div className="flex items-center p-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+          {/* View Grid Switcher */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+              Showing {filteredMedia.length} {filteredMedia.length === 1 ? "work" : "works"}
+            </span>
+            <div className="flex items-center p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   viewMode === "grid"
-                    ? "bg-slate-100 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-cyan-500/10 text-cyan-500 dark:text-cyan-400"
+                    : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 }`}
-                title="Grid View"
+                title="Grid Layout"
               >
                 <Squares2X2Icon className="w-4 h-4" />
               </button>
@@ -242,59 +258,80 @@ const Home = () => {
                 onClick={() => setViewMode("masonry")}
                 className={`p-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   viewMode === "masonry"
-                    ? "bg-slate-100 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-cyan-500/10 text-cyan-500 dark:text-cyan-400"
+                    : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 }`}
-                title="Masonry View"
+                title="Masonry Layout"
               >
                 <ViewColumnsIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
+
+        {/* Layer 2: Category Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {categories.map((cat) => {
+            const isSelected =
+              currentCategory === cat.value ||
+              (!searchParams.get("category") && cat.value === "all");
+            return (
+              <button
+                key={cat.value}
+                onClick={() => handleCategorySelect(cat.value)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  isSelected
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg shadow-black/10 dark:shadow-white/10 scale-105"
+                    : "bg-white dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10"
+                }`}
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {/* ========================================================
-          MEDIA GALLERY GRID
+          MAIN MEDIA GALLERY SHOWCASE
       ======================================================== */}
       <section>
         {loading ? (
-          <div className="py-24 flex flex-col items-center justify-center space-y-4">
+          <div className="py-28 flex flex-col items-center justify-center space-y-4">
             <Spinner />
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
-              Curating stunning visuals for you...
+            <p className="text-sm font-semibold text-cyan-400 animate-pulse tracking-wide">
+              Loading visual gallery & image DNA...
             </p>
           </div>
-        ) : media.length === 0 ? (
+        ) : filteredMedia.length === 0 ? (
           /* Empty State */
-          <div className="text-center py-20 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs max-w-2xl mx-auto space-y-5">
-            <div className="w-20 h-20 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center mx-auto text-indigo-600 dark:text-indigo-400">
+          <div className="text-center py-20 px-6 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-white/10 shadow-xl max-w-xl mx-auto space-y-5">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 text-cyan-400 flex items-center justify-center mx-auto">
               <PhotoIcon className="w-10 h-10" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <h3 className="text-xl font-bold text-slate-800 dark:text-white">
                 No visual works found
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                {currentSearch || currentCategory !== "all"
-                  ? "We couldn't find any media matching your current filters. Try searching for something else or clearing filters."
-                  : "Be the very first creator to share a stunning photograph or digital masterpiece with the community!"}
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                {currentSearch || currentCategory !== "all" || mediumFilter !== "all"
+                  ? "No results matched your active filters. Try adjusting the search query or medium type."
+                  : "Be the pioneer artist to upload and share a photo with the world!"}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              {(currentSearch || currentCategory !== "all") && (
-                <button
-                  onClick={clearFilters}
-                  className="px-5 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                >
-                  Clear All Filters
-                </button>
-              )}
+              <button
+                onClick={clearFilters}
+                className="px-5 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Reset All Filters
+              </button>
               {user ? (
                 <Link
                   to="/upload"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-500/25 transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white text-xs font-bold shadow-md shadow-cyan-500/25 transition-all"
                 >
                   <CloudArrowUpIcon className="w-4 h-4" />
                   <span>Upload Media</span>
@@ -302,7 +339,7 @@ const Home = () => {
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-500/25 transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 text-white text-xs font-bold shadow-md shadow-cyan-500/25 transition-all"
                 >
                   <span>Sign In to Upload</span>
                   <ArrowRightIcon className="w-4 h-4" />
@@ -311,7 +348,7 @@ const Home = () => {
             </div>
           </div>
         ) : (
-          /* Populated Media Grid */
+          /* Populated Responsive Grid */
           <div
             className={
               viewMode === "masonry"
@@ -319,7 +356,7 @@ const Home = () => {
                 : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             }
           >
-            {media.map((item) => (
+            {filteredMedia.map((item) => (
               <div key={item._id} className="break-inside-avoid">
                 <MediaCard item={item} onUpdate={fetchMedia} />
               </div>
@@ -329,30 +366,35 @@ const Home = () => {
       </section>
 
       {/* ========================================================
-          BOTTOM CALL TO ACTION (For Guests)
+          BOTTOM CREATIVE BANNER
       ======================================================== */}
       {!user && (
-        <section className="rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white p-8 sm:p-12 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <h2 className="text-2xl sm:text-3xl font-black">
-              Ready to Share Your Masterpieces?
+        <section className="rounded-[2.5rem] bg-gradient-to-r from-[#0d1022] via-[#14122d] to-[#0d1022] text-white p-8 sm:p-14 border border-white/10 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="space-y-3 text-center md:text-left z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-[11px] font-bold text-cyan-300">
+              <SparklesIcon className="w-3.5 h-3.5" />
+              <span>Join the Creative Collective</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black">
+              Showcase Your Vision to the World
             </h2>
-            <p className="text-indigo-100 text-sm sm:text-base max-w-xl">
-              Join thousands of creators showcasing their photography, artwork, and visual stories. It takes only a minute to get started.
+            <p className="text-slate-300 text-sm max-w-xl">
+              Publish high-resolution photographs, generative art, and creative renders with intelligent auto-EXIF metadata tracking.
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 z-10">
             <Link
               to="/login"
-              className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-semibold border border-white/20 backdrop-blur-sm transition-all"
+              className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-md transition-all"
             >
-              Log In
+              Sign In
             </Link>
             <Link
               to="/register"
-              className="px-6 py-3 rounded-full bg-white hover:bg-slate-50 text-indigo-700 text-sm font-bold shadow-lg shadow-black/10 transition-all hover:scale-105"
+              className="px-7 py-3 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-cyan-500/25 transition-all hover:scale-105"
             >
-              Create Free Account
+              Join ImageGallery Free
             </Link>
           </div>
         </section>

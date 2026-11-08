@@ -258,12 +258,29 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
 
             {hasMetadata && (
               <div className="modal-metadata">
-                <h3 className="metadata-title">Shot Details</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="metadata-title">Shot Details (Image DNA)</h3>
+                  {metadata.isAiGenerated ? (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/40">
+                      🤖 AI Generated ({metadata.aiModel || "Generative AI"})
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                      📸 Authentic Optical Capture
+                    </span>
+                  )}
+                </div>
                 <div className="metadata-grid">
                   {(metadata.cameraMake || metadata.cameraModel) && (
                     <div className="metadata-item">
                       <span className="metadata-label">Camera</span>
                       <span className="metadata-value">{[metadata.cameraMake, metadata.cameraModel].filter(Boolean).join(' ')}</span>
+                    </div>
+                  )}
+                  {metadata.cameraType && (
+                    <div className="metadata-item">
+                      <span className="metadata-label">Camera Type</span>
+                      <span className="metadata-value">{metadata.cameraType}</span>
                     </div>
                   )}
                   {metadata.lensModel && (
@@ -280,13 +297,13 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
                   )}
                   {captureDate && (
                     <div className="metadata-item">
-                      <span className="metadata-label">Captured</span>
+                      <span className="metadata-label">Captured Date/Time</span>
                       <span className="metadata-value">{captureDate.toLocaleString()}</span>
                     </div>
                   )}
                   {metadata.exposureTime && (
                     <div className="metadata-item">
-                      <span className="metadata-label">Exposure</span>
+                      <span className="metadata-label">Shutter Speed</span>
                       <span className="metadata-value">{metadata.exposureTime}</span>
                     </div>
                   )}
@@ -296,21 +313,21 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
                       <span className="metadata-value">f/{metadata.aperture}</span>
                     </div>
                   )}
+                  {metadata.focalLength && (
+                    <div className="metadata-item">
+                      <span className="metadata-label">Focus / Focal Length</span>
+                      <span className="metadata-value">{metadata.focalLength}mm</span>
+                    </div>
+                  )}
                   {metadata.iso && (
                     <div className="metadata-item">
                       <span className="metadata-label">ISO</span>
                       <span className="metadata-value">{metadata.iso}</span>
                     </div>
                   )}
-                  {metadata.focalLength && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Focal Length</span>
-                      <span className="metadata-value">{metadata.focalLength}mm</span>
-                    </div>
-                  )}
                   {locationText && (
                     <div className="metadata-item">
-                      <span className="metadata-label">Location</span>
+                      <span className="metadata-label">Location / GPS</span>
                       <span className="metadata-value">{locationText}</span>
                     </div>
                   )}

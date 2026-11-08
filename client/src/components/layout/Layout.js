@@ -17,11 +17,11 @@ const Layout = ({ children }) => {
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#060811] text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden selection:bg-cyan-400 selection:text-slate-950">
       {/* Ambient background glow orbs */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed top-1/3 right-10 w-96 h-96 bg-purple-500/10 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-10 left-1/3 w-96 h-96 bg-pink-500/10 dark:bg-pink-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed top-0 left-1/4 w-[36rem] h-[36rem] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none -z-10" />
+      <div className="fixed top-1/3 right-10 w-[36rem] h-[36rem] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="fixed bottom-10 left-1/3 w-[36rem] h-[36rem] bg-pink-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
 
       {/* Main sticky navigation */}
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />

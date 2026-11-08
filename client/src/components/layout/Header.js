@@ -11,11 +11,8 @@ import {
   SunIcon,
   MoonIcon,
   CloudArrowUpIcon,
-  UserCircleIcon,
   PhotoIcon,
-  Squares2X2Icon,
-  ShieldCheckIcon,
-  SparklesIcon
+  ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 
 const Header = ({ toggleSidebar, isSidebarOpen }) => {
@@ -26,7 +23,6 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
 
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -38,7 +34,6 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     setSearchTerm(params.get("search") || "");
-    setSelectedCategory(params.get("category") || "all");
     setIsMobileMenuOpen(false);
   }, [location.search, location.pathname]);
 
@@ -66,11 +61,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
     event.preventDefault();
     const params = new URLSearchParams();
     const trimmed = searchTerm.trim();
-
     if (trimmed) params.set("search", trimmed);
-    if (selectedCategory && selectedCategory !== "all") {
-      params.set("category", selectedCategory);
-    }
     const query = params.toString();
     navigate(`/${query ? `?${query}` : ""}`);
   };
@@ -83,20 +74,12 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
     navigate(`/${query ? `?${query}` : ""}`);
   };
 
-  const categories = [
-    { label: "All", value: "all" },
-    { label: "Nature", value: "Nature" },
-    { label: "Architecture", value: "Architecture" },
-    { label: "Art", value: "Art" },
-    { label: "General", value: "General" }
-  ];
-
   return (
     <header
       className={`sticky top-0 z-40 w-full transition-all duration-300 border-b ${
         isScrolled
-          ? "bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-slate-200/80 dark:border-slate-800/80 shadow-sm"
-          : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50"
+          ? "bg-white/85 dark:bg-[#070913]/90 backdrop-blur-2xl border-slate-200/80 dark:border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.15)]"
+          : "bg-white/95 dark:bg-[#070913]/95 backdrop-blur-xl border-slate-200/50 dark:border-white/5"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -105,7 +88,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleSidebar}
-              className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors focus:outline-none"
+              className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors focus:outline-none"
               aria-label="Toggle menu"
               title="Toggle sidebar drawer"
             >
@@ -117,14 +100,14 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
             </button>
 
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 group-hover:shadow-indigo-500/40 transition-all">
-                <PhotoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-cyan-400 via-violet-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-cyan-500/25 group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(0,245,212,0.4)] transition-all">
+                <PhotoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-lg sm:text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-slate-300 tracking-tight">
+                <span className="text-lg sm:text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-cyan-200 dark:to-pink-300 tracking-tight">
                   ImageGallery
                 </span>
-                <span className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                <span className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-black rounded-md bg-cyan-400/10 text-cyan-500 dark:text-cyan-400 border border-cyan-400/30">
                   3.0
                 </span>
               </div>
@@ -134,28 +117,28 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
           {/* Center: Search Bar */}
           <div className="flex-1 max-w-xl hidden md:block">
             <form onSubmit={handleSearchSubmit} className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-cyan-400 transition-colors">
                 <MagnifyingGlassIcon className="w-4 h-4" />
               </div>
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search images, artists, or keywords... (Ctrl+K)"
+                placeholder="Search optics, aperture, resolution, tags... (Ctrl+K)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-24 py-2 sm:py-2.5 text-sm rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-indigo-500/40 dark:focus:border-indigo-400/40 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                className="w-full pl-10 pr-24 py-2 sm:py-2.5 text-sm rounded-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 focus:bg-white dark:focus:bg-[#070913] border border-transparent focus:border-cyan-400/50 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-cyan-400/10 transition-all"
               />
               <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={handleClearSearch}
-                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
                     <XMarkIcon className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 shadow-xs">
+                <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-white/10">
                   ⌘K
                 </kbd>
               </div>
@@ -164,23 +147,21 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
 
           {/* Right Navigation & User Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Quick Explore Link */}
             <Link
               to="/"
-              className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                 location.pathname === "/"
-                  ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "text-cyan-400 bg-cyan-400/10 border border-cyan-400/20"
+                  : "text-slate-600 dark:text-slate-300 hover:text-cyan-400 hover:bg-white/5"
               }`}
             >
-              <span>Explore</span>
+              <span>Showcase</span>
             </Link>
 
-            {/* Admin Badge/Link if user is admin */}
             {user?.role === "admin" && (
               <Link
                 to="/admin"
-                className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+                className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all"
                 title="Admin Panel"
               >
                 <ShieldCheckIcon className="w-4 h-4" />
@@ -191,7 +172,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
             {/* Theme Toggle */}
             <button
               onClick={handleToggleTheme}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-all focus:outline-none"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-all focus:outline-none"
               title={`Switch to ${currentTheme === "dark" ? "Light" : "Dark"} Mode`}
               aria-label="Toggle Theme"
             >
@@ -205,27 +186,25 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
             {/* Auth Actions */}
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Upload Button */}
                 <Link
                   to="/upload"
-                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(0,245,212,0.25)] hover:shadow-[0_0_30px_rgba(0,245,212,0.35)] hover:-translate-y-0.5 transition-all"
                 >
                   <CloudArrowUpIcon className="w-4 h-4" />
                   <span className="hidden sm:inline">Upload</span>
                 </Link>
 
-                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block mx-0.5" />
+                <div className="h-6 w-px bg-slate-200 dark:bg-white/10 hidden sm:block mx-0.5" />
 
-                {/* Profile Pill */}
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                   title="My Profile"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
                     {user.username?.charAt(0).toUpperCase() || "U"}
                   </div>
-                  <span className="hidden xl:inline text-xs font-semibold text-slate-700 dark:text-slate-200 max-w-[100px] truncate">
+                  <span className="hidden xl:inline text-xs font-bold text-slate-700 dark:text-slate-200 max-w-[100px] truncate">
                     {user.username}
                   </span>
                 </Link>
@@ -238,51 +217,41 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                 >
                   Log In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
+                  className="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(0,245,212,0.25)] hover:-translate-y-0.5 transition-all"
                 >
                   Sign Up
                 </Link>
               </div>
             )}
 
-            {/* Mobile search / menu toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden"
-              aria-label="Toggle mobile menu"
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-white/5 md:hidden"
+              aria-label="Toggle search"
             >
               <MagnifyingGlassIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Mobile Search Drawer (collapsible) */}
+        {/* Mobile Search Input */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-3 pb-4 border-t border-slate-200/60 dark:border-slate-800/60 animate-fade-in">
+          <div className="md:hidden py-3 pb-4 border-t border-slate-200/60 dark:border-white/10 animate-fade-in">
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
-                placeholder="Search photos, artists..."
+                placeholder="Search optics, cameras, tags..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-10 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-9 pr-10 py-2 text-sm rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
               />
               <MagnifyingGlassIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="p-1 rounded-full text-slate-400 absolute right-2.5 top-2.5"
-                >
-                  <XMarkIcon className="w-3.5 h-3.5" />
-                </button>
-              )}
             </form>
           </div>
         )}
