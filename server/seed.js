@@ -1,8 +1,8 @@
 // server/seed.js
-require('dotenv').config();
-const bcrypt = require('bcryptjs');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcryptjs');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const connectDB = require('./config/db');
 const User = require('./models/User');
 const Media = require('./models/Media');

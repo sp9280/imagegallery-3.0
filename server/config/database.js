@@ -3,7 +3,7 @@ const { Sequelize, Op } = require('sequelize');
 const logger = require('./logger');
 
 const DB_HOST = process.env.DB_HOST || '127.0.0.1';
-const DB_PORT = parseInt(process.env.DB_PORT || '3307', 10);
+const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10);
 const DB_NAME = process.env.DB_NAME || 'imagegallery';
 const DB_USER = process.env.DB_USER || 'root';
 const DB_PASSWORD = process.env.DB_PASSWORD ? process.env.DB_PASSWORD : null;
