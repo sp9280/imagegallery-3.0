@@ -1,0 +1,29 @@
+{
+  "name": "imagegallery-3.0",
+  "version": "3.0.0",
+  "description": "A modern image gallery application with React frontend and Node.js backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm start",
+    "client": "cd client && npm start",
+    "install-server": "cd server && npm install",
+    "install-client": "cd client && npm install",
+    "build": "cd client && npm run build",
+    "test": "cd client && npm test"
+  },
+  "keywords": [
+    "image-gallery",
+    "react",
+    "nodejs",
+    "mysql"
+  ],
+  "author": "ImageGallery Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "dependencies": {
+    "nodemailer": "^7.0.9"
+  }
+}

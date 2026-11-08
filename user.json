@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "username": "regular_user",
+    "email": "user@example.com",
+    "password": "hashed_password_123",
+    "type": "user",
+    "role": "user",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "username": "moderator_user",
+    "email": "moderator@example.com",
+    "password": "hashed_password_456",
+    "type": "moderator",
+    "role": "moderator",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "username": "admin_user",
+    "email": "admin@example.com",
+    "password": "hashed_password_789",
+    "type": "admin",
+    "role": "admin",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+]

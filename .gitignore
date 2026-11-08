@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+client/.env
+client/.env.local
+server/.env
+
+# Local database storage (MariaDB / MySQL data)
+server/data/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+combined.log
+error.log
+server/*.log
+
+# Production build
+client/build/
+dist/
+
+# Uploads
+server/uploads/*
+!server/uploads/.gitkeep
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
