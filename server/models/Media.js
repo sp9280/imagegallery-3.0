@@ -117,6 +117,22 @@ const MediaModel = sequelize.define('Media', {
   metadata: {
     type: DataTypes.JSON,
     defaultValue: null
+  },
+  adminLocked: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  unlockRequested: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  unlockRequestReason: {
+    type: DataTypes.TEXT,
+    defaultValue: null
+  },
+  unlockRequestedAt: {
+    type: DataTypes.DATE,
+    defaultValue: null
   }
 }, {
   tableName: 'media',

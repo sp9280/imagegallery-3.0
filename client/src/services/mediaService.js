@@ -130,6 +130,32 @@ export const editMedia = async (mediaId, updates) => {
 };
 
 /**
+ * Request unlock for an admin-locked image
+ */
+export const requestUnlock = async (mediaId, reason) => {
+  try {
+    const response = await api.post(`/media/${mediaId}/request-unlock`, { reason });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting unlock:', error);
+    throw error;
+  }
+};
+
+/**
+ * Resolve unlock request (admin/coadmin only)
+ */
+export const resolveUnlock = async (mediaId, action) => {
+  try {
+    const response = await api.post(`/media/${mediaId}/resolve-unlock`, { action });
+    return response.data;
+  } catch (error) {
+    console.error('Error resolving unlock:', error);
+    throw error;
+  }
+};
+
+/**
  * Track download
  */
 export const trackDownload = async (mediaId) => {

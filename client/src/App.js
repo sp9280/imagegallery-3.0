@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import AdminPanel from "./components/admin/AdminPanel";
 import TermsAndConditions from "./components/common/TermsAndConditions";
 import ManageUsers from "./components/admin/ManageUsers";
+import ManageImages from "./components/admin/ManageImages";
 import Dashboard from "./components/admin/Dashboard";
 import Layout from "./components/layout/Layout";
 // import "./styles/style.css"; // Removing old global styles in favor of Tailwind
@@ -73,6 +74,14 @@ const AnimatedRoutes = () => {
           element={
             <ProtectedRoute>
               <ManageUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/images"
+          element={
+            <ProtectedRoute>
+              <ManageImages />
             </ProtectedRoute>
           }
         />

@@ -76,6 +76,14 @@ const AdminPanel = () => {
       hoverGradient: "hover:from-blue-600 hover:to-blue-700"
     },
     {
+      title: "Manage Images",
+      description: "Moderate, edit, and organize all uploaded media",
+      icon: FiImage,
+      route: "/admin/images",
+      gradient: "from-pink-500 to-rose-600",
+      hoverGradient: "hover:from-pink-600 hover:to-rose-700"
+    },
+    {
       title: "View Dashboard",
       description: "Analytics and platform insights",
       icon: FiBarChart2,
@@ -220,7 +228,7 @@ const AdminPanel = () => {
             </h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (
               <motion.button
                 key={action.title}

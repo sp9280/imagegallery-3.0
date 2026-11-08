@@ -4,6 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 import Comments from "./Comments";
 import HideReasonModal from "./HideReasonModal";
 import mediaService from "../../services/mediaService";
+import { augmentLocationString, formatCoordinatesWithPlace } from "../../utils/geoUtils";
 import {
   XMarkIcon,
   HeartIcon as HeartOutline,
@@ -58,15 +59,35 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
 
   const isOwner = user && (user._id === item.user?._id || user._id === item.user || user.id === item.user);
   const isAdmin = user && user.role === "admin";
-  const canModerate = isOwner || isAdmin;
+  const isCoadmin = user && user.role === "coadmin";
+  
+  // Rule: If image was made private by user (not locked by admin), admin can only see it - no modification
+  // But if the logged-in user IS THE OWNER of the image (self-uploaded), they ALWAYS have full permission to hide/unhide and toggle private/public
+  const isUserPrivate = !item.isPublic && !item.adminLocked;
+  const canModify = isOwner || (isAdmin && !isUserPrivate);
+  const canModerate = isOwner || isAdmin || isCoadmin;
+
+  // Admin Lock & Unlock request states
+  const [requestingUnlock, setRequestingUnlock] = useState(false);
+  const [unlockReason, setUnlockReason] = useState("");
+  const [unlockRequested, setUnlockRequested] = useState(item.unlockRequested || false);
+  const [unlockSuccess, setUnlockSuccess] = useState("");
 
   const metadata = item.metadata || {};
   const photographer = metadata.artist || item.userInfo?.username || item.user?.username || "Artist";
   const captureDate = metadata.captureDate ? new Date(metadata.captureDate) : null;
-  const locationText = metadata.locationText || (metadata.location
-    ? `${metadata.location.latitude?.toFixed(4)}°, ${metadata.location.longitude?.toFixed(4)}°`
+  const rawLocation = metadata.locationText || (metadata.location
+    ? formatCoordinatesWithPlace(metadata.location.latitude, metadata.location.longitude)
     : null);
+  const locationText = rawLocation ? augmentLocationString(rawLocation) : null;
   const resolution = metadata.resolution;
+
+  // Privacy Rule: Device details, location, and owner name are shown ONLY to:
+  // 1. The user who uploaded it (owner)
+  // 2. Admin
+  // 3. Co-Admin
+  // Normal visitors / other users do NOT see private hardware & location telemetry
+  const canViewDeviceAndLocation = isOwner || isAdmin || isCoadmin;
 
   useEffect(() => {
     let isMounted = true;
@@ -164,7 +185,7 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
   };
 
   const handleSaveDetails = async () => {
-    if (!canModerate) return;
+    if (!canModify) return;
     try {
       const updates = {
         title: editedDetails.title,
@@ -182,7 +203,31 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
       if (onUpdate) onUpdate();
       setIsEditingDetails(false);
     } catch (error) {
-      alert("Failed to update details");
+      alert(error.response?.data?.message || "Failed to update details");
+    }
+  };
+
+  const handleRequestUnlockSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await mediaService.requestUnlock(item._id, unlockReason);
+      setUnlockRequested(true);
+      setUnlockSuccess("Unlock request submitted successfully to administrators.");
+      setRequestingUnlock(false);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to request unlock");
+    }
+  };
+
+  const handleResolveUnlock = async (action) => {
+    try {
+      await mediaService.resolveUnlock(item._id, action);
+      alert(`Unlock request ${action === 'approve' ? 'approved (unlocked)' : 'rejected'}`);
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to resolve unlock");
     }
   };
 
@@ -388,16 +433,30 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
               </div>
 
               <div className="grid grid-cols-2 gap-2.5 text-xs">
-                {metadata.cameraModel && (
+                {/* Device Name / Camera (Privileged: Only Uploader / Admin / Co-admin) */}
+                {canViewDeviceAndLocation && metadata.cameraModel && (
                   <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
-                    <span className="text-[10px] text-slate-400 block font-semibold">Camera</span>
+                    <span className="text-[10px] text-slate-400 block font-semibold flex items-center justify-between">
+                      <span>Device Name / Camera</span>
+                      <span className="text-[9px] text-amber-400 font-mono">Privileged</span>
+                    </span>
                     <span className="font-bold text-white truncate block">{metadata.cameraModel}</span>
                   </div>
                 )}
-                {metadata.cameraType && (
+                {canViewDeviceAndLocation && metadata.cameraType && (
                   <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
                     <span className="text-[10px] text-slate-400 block font-semibold">Camera Type</span>
                     <span className="font-bold text-white truncate block">{metadata.cameraType}</span>
+                  </div>
+                )}
+                {/* Device Owner / Photographer (Privileged: Only Uploader / Admin / Co-admin) */}
+                {canViewDeviceAndLocation && metadata.artist && (
+                  <div className="col-span-2 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20">
+                    <span className="text-[10px] text-amber-300 block font-semibold flex items-center justify-between">
+                      <span>Device Owner / Registered Creator</span>
+                      <span className="text-[9px] text-amber-400 font-mono">Owner/Admin Only</span>
+                    </span>
+                    <span className="font-bold text-white truncate block">{metadata.artist}</span>
                   </div>
                 )}
                 {metadata.aperture && (
@@ -426,12 +485,16 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
                     </span>
                   </div>
                 )}
-                {locationText && (
+                {/* Location with Coordinates & Map Place (Privileged: Only Uploader / Admin / Co-admin) */}
+                {canViewDeviceAndLocation && locationText && (
                   <div className="col-span-2 bg-white/5 p-2.5 rounded-xl border border-white/5 flex items-center gap-2">
                     <MapPinIcon className="w-4 h-4 text-cyan-400 shrink-0" />
                     <div className="min-w-0">
-                      <span className="text-[10px] text-slate-400 block font-semibold">Location / GPS</span>
-                      <span className="font-bold text-white truncate block">{locationText}</span>
+                      <span className="text-[10px] text-slate-400 block font-semibold flex items-center justify-between">
+                        <span>Map Location & Coordinates</span>
+                        <span className="text-[9px] text-amber-400 font-mono">Privileged</span>
+                      </span>
+                      <span className="font-bold text-white block leading-snug">{locationText}</span>
                     </div>
                   </div>
                 )}
@@ -447,6 +510,114 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
               </div>
             </div>
 
+            {/* Admin Lock / Privacy Notice Box */}
+            {item.adminLocked && (
+              <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/40 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <LockClosedIcon className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-300 uppercase tracking-wider">
+                      Locked / Hidden by Administrator
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      {isOwner
+                        ? "This image was hidden from the public by an administrator. You require admin/co-admin permission to unlock it."
+                        : `This image was locked and hidden by an administrator (${item.hiddenByUsername || 'Admin'}).`}
+                    </p>
+                    {item.hideReason && (
+                      <p className="text-[11px] text-rose-200/80 mt-1 font-mono bg-black/40 px-2 py-1 rounded">
+                        Reason: {item.hideReason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Owner Unlock Request Section */}
+                {isOwner && !isAdmin && (
+                  <div className="pt-2 border-t border-rose-500/20">
+                    {unlockSuccess && (
+                      <p className="text-xs text-emerald-400 font-semibold mb-2">{unlockSuccess}</p>
+                    )}
+                    {unlockRequested || item.unlockRequested ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+                        ⏳ Unlock request submitted — Pending admin review
+                      </span>
+                    ) : requestingUnlock ? (
+                      <form onSubmit={handleRequestUnlockSubmit} className="space-y-2 mt-2">
+                        <textarea
+                          required
+                          rows={2}
+                          placeholder="Provide explanation or request details..."
+                          value={unlockReason}
+                          onChange={(e) => setUnlockReason(e.target.value)}
+                          className="w-full px-3 py-2 text-xs rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-1 focus:ring-rose-400"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="submit"
+                            className="px-4 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs shadow-md transition-all"
+                          >
+                            Send Unlock Request
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRequestingUnlock(false)}
+                            className="px-3 py-1.5 rounded-xl bg-white/10 text-slate-300 text-xs hover:bg-white/20"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        onClick={() => setRequestingUnlock(true)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-bold shadow-md transition-all"
+                      >
+                        <LockClosedIcon className="w-3.5 h-3.5" />
+                        <span>Request Admin to Unlock</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Admin Resolution of Unlock Request */}
+                {(isAdmin || isCoadmin) && item.unlockRequested && (
+                  <div className="pt-2 border-t border-rose-500/20 space-y-2">
+                    <p className="text-xs text-amber-300 font-bold">
+                      🔔 User requested unlock:
+                    </p>
+                    <p className="text-xs text-slate-300 bg-black/40 p-2 rounded-lg italic">
+                      "{item.unlockRequestReason || 'No reason specified'}"
+                    </p>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => handleResolveUnlock('approve')}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-all shadow-md"
+                      >
+                        ✓ Approve & Unlock Image
+                      </button>
+                      <button
+                        onClick={() => handleResolveUnlock('reject')}
+                        className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-semibold text-xs transition-all"
+                      >
+                        ✕ Reject Request
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* User Private Notice for Admin (when viewing another user's private upload) */}
+            {isAdmin && !isOwner && isUserPrivate && (
+              <div className="p-3.5 rounded-2xl bg-blue-950/30 border border-blue-500/30 flex items-start gap-2.5">
+                <LockClosedIcon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-200 leading-relaxed">
+                  <strong>Notice:</strong> This image was set to <strong>Private</strong> by its uploader. Administrators can view it on this dashboard, but per user privacy rules, modifications and public overrides are disabled.
+                </p>
+              </div>
+            )}
+
             {/* Moderation Actions (Owner or Admin) */}
             {canModerate && (
               <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-3">
@@ -454,17 +625,19 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
                     {isAdmin && !isOwner ? "Admin Moderation Controls" : "Creator & Moderation Controls"}
                   </span>
-                  <button
-                    onClick={() => setIsEditingDetails(!isEditingDetails)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-colors"
-                  >
-                    <PencilSquareIcon className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{isEditingDetails ? "Close Editor" : "Edit Details"}</span>
-                  </button>
+                  {canModify && (
+                    <button
+                      onClick={() => setIsEditingDetails(!isEditingDetails)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    >
+                      <PencilSquareIcon className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{isEditingDetails ? "Close Editor" : "Edit Details"}</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Inline Metadata & Privacy Editor */}
-                {isEditingDetails && (
+                {isEditingDetails && canModify && (
                   <div className="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-3 text-xs">
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Title</label>
@@ -544,13 +717,16 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setShowHideReasonModal(true)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-white/10 transition-colors"
-                  >
-                    <EyeSlashIcon className="w-3.5 h-3.5" />
-                    <span>{item.isHidden ? "Unhide Photo" : "Hide Photo"}</span>
-                  </button>
+                  {/* Hide / Unhide Action */}
+                  {canModify && (
+                    <button
+                      onClick={() => setShowHideReasonModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-white/10 transition-colors"
+                    >
+                      <EyeSlashIcon className="w-3.5 h-3.5" />
+                      <span>{item.isHidden ? "Unhide Photo" : "Hide Photo"}</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleDelete}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-xs font-semibold text-rose-300 border border-rose-500/30 transition-colors"

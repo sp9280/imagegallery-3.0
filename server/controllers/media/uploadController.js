@@ -53,7 +53,8 @@ const extractMetadata = async (filePath) => {
     if (tags.Make) metadata.cameraMake = String(tags.Make).trim();
     if (tags.Model) metadata.cameraModel = String(tags.Model).trim();
     if (tags.LensModel) metadata.lensModel = String(tags.LensModel).trim();
-    if (tags.Artist) metadata.artist = String(tags.Artist).trim();
+    const ownerName = tags.CameraOwnerName || tags.OwnerName || tags.Artist || tags.Byline;
+    if (ownerName) metadata.artist = String(ownerName).trim();
 
     const captureDate = toDate(tags.DateTimeOriginal || tags.CreateDate || tags.ModifyDate);
     if (captureDate && !Number.isNaN(captureDate.getTime())) {

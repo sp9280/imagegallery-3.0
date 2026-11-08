@@ -88,10 +88,26 @@ const manageMedia = async (req, res) => {
 
     switch (action) {
       case 'approve':
+      case 'unhide':
         media.isPublic = true;
+        media.isHidden = false;
+        media.hideLevel = 'visible';
+        media.adminLocked = false;
+        media.unlockRequested = false;
         break;
       case 'reject':
+      case 'hide':
+        // Rule: If image is private by the user (and not locked by admin), admin cannot modify it
+        if (!media.isPublic && !media.adminLocked && media.user.toString() !== req.user.id) {
+          return response.error(res, 'This image was made private by the user. Administrators can only view it and cannot modify its visibility.', 403);
+        }
         media.isPublic = false;
+        media.isHidden = true;
+        media.hideLevel = 'hard_hide';
+        media.adminLocked = true;
+        media.hiddenBy = req.user.id;
+        media.hiddenByUsername = req.user.username;
+        media.hiddenAt = new Date();
         break;
       case 'delete':
         await Media.findByIdAndDelete(mediaId);

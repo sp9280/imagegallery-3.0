@@ -339,6 +339,18 @@ const toggleHide = async (req, res) => {
       return response.error(res, 'Unauthorized to hide/unhide this media', 403);
     }
 
+    // Rule: If image was made private/hidden by the user/owner, admin can only see it, no modification by admin
+    if (isAdmin && !isOwner) {
+      if (media.isPublic === false && !media.adminLocked) {
+        return response.error(res, 'This image was made private by the user. Administrators can only view it and cannot modify its visibility.', 403);
+      }
+    }
+
+    // Rule: If image was locked/hidden by an admin, the user cannot unhide it directly
+    if (isOwner && !isAdmin && media.adminLocked) {
+      return response.error(res, 'This image was hidden by an administrator. You require admin/co-admin permission to unlock it. Please submit an unlock request.', 403);
+    }
+
     // Store previous state for history
     const previousState = {
       isHidden: media.isHidden,
@@ -380,6 +392,19 @@ const toggleHide = async (req, res) => {
     media.hiddenAt = media.isHidden ? new Date() : null;
     media.scheduledHideAt = scheduledHideAt || media.scheduledHideAt;
     media.scheduledUnhideAt = scheduledUnhideAt || media.scheduledUnhideAt;
+
+    if (media.isHidden) {
+      media.isPublic = false;
+      if (isAdmin && !isOwner) {
+        media.adminLocked = true;
+      }
+    } else {
+      // Unhiding
+      media.adminLocked = false;
+      media.unlockRequested = false;
+      media.unlockRequestReason = null;
+      media.isPublic = true;
+    }
 
     await media.save();
 
@@ -440,6 +465,18 @@ const editMedia = async (req, res) => {
       return response.error(res, 'Unauthorized to edit this media', 403);
     }
 
+    // Rule: If image was made private/hidden by user, admin can only see it, no modification by admin
+    if (isAdmin && !isOwner) {
+      if (media.isPublic === false && !media.adminLocked) {
+        return response.error(res, 'This image was made private by the user. Administrators can only view it and cannot modify its details.', 403);
+      }
+    }
+
+    // Rule: If image is locked by admin, user cannot modify visibility directly without admin unlocking it
+    if (isOwner && !isAdmin && media.adminLocked && isPublic !== undefined && (isPublic === true || isPublic === 'true')) {
+      return response.error(res, 'This image was hidden by an administrator. You require admin/co-admin permission to unlock it. Please submit an unlock request.', 403);
+    }
+
     // Update allowed fields
     if (title !== undefined) {
       if (!title.trim()) {
@@ -475,7 +512,21 @@ const editMedia = async (req, res) => {
     }
 
     if (isPublic !== undefined) {
-      media.isPublic = isPublic === true || isPublic === 'true';
+      const targetPublic = isPublic === true || isPublic === 'true';
+      media.isPublic = targetPublic;
+      if (!targetPublic) {
+        media.isHidden = true;
+        media.hideLevel = 'hard_hide';
+        if (isAdmin && !isOwner) {
+          media.adminLocked = true;
+        }
+      } else {
+        media.isHidden = false;
+        media.hideLevel = 'visible';
+        media.adminLocked = false;
+        media.unlockRequested = false;
+        media.unlockRequestReason = null;
+      }
     }
 
     // Update metadata if provided
@@ -739,6 +790,86 @@ const getMediaWithStatus = async (req, res) => {
   }
 };
 
+/**
+ * Request unlock for an admin-locked image (Owner only)
+ */
+const requestUnlock = async (req, res) => {
+  try {
+    const { mediaId } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.id;
+
+    const media = await Media.findById(mediaId);
+    if (!media) {
+      return response.error(res, 'Media not found', 404);
+    }
+
+    if (media.user.toString() !== userId) {
+      return response.error(res, 'Only the image owner can request an unlock', 403);
+    }
+
+    if (!media.adminLocked) {
+      return response.error(res, 'This image is not locked by an administrator', 400);
+    }
+
+    media.unlockRequested = true;
+    media.unlockRequestReason = reason || 'Owner requested unlock to restore image visibility';
+    media.unlockRequestedAt = new Date();
+    await media.save();
+
+    logger.info(`User ${userId} requested unlock for media ${mediaId}`);
+    response.success(res, 'Unlock request submitted successfully to administrators', {
+      unlockRequested: true,
+      unlockRequestReason: media.unlockRequestReason
+    });
+  } catch (err) {
+    logger.error('Error requesting unlock:', err);
+    response.error(res, 'Failed to submit unlock request', 500);
+  }
+};
+
+/**
+ * Admin resolve unlock request (approve/unlock or reject)
+ */
+const resolveUnlock = async (req, res) => {
+  try {
+    const { mediaId } = req.params;
+    const { action } = req.body; // 'approve' (unlocks) or 'reject'
+    const userRole = req.user.role;
+
+    if (userRole !== 'admin' && userRole !== 'coadmin') {
+      return response.error(res, 'Only administrators can resolve unlock requests', 403);
+    }
+
+    const media = await Media.findById(mediaId);
+    if (!media) {
+      return response.error(res, 'Media not found', 404);
+    }
+
+    if (action === 'approve') {
+      media.adminLocked = false;
+      media.unlockRequested = false;
+      media.unlockRequestReason = null;
+      media.isHidden = false;
+      media.hideLevel = 'visible';
+      media.isPublic = true;
+      await media.save();
+      logger.info(`Admin ${req.user.username} approved unlock for media ${mediaId}`);
+      return response.success(res, 'Image unlocked and restored to public view', { media });
+    } else if (action === 'reject') {
+      media.unlockRequested = false;
+      await media.save();
+      logger.info(`Admin ${req.user.username} rejected unlock for media ${mediaId}`);
+      return response.success(res, 'Unlock request rejected', { media });
+    } else {
+      return response.error(res, 'Invalid action (must be approve or reject)', 400);
+    }
+  } catch (err) {
+    logger.error('Error resolving unlock request:', err);
+    response.error(res, 'Failed to resolve unlock request', 500);
+  }
+};
+
 module.exports = {
   toggleLike,
   checkLikeStatus,
@@ -751,4 +882,6 @@ module.exports = {
   editMedia,
   trackDownload,
   getMediaWithStatus,
+  requestUnlock,
+  resolveUnlock,
 };

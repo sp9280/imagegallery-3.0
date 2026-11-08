@@ -3,6 +3,7 @@ import React, { useState, useContext } from "react";
 import { GalleryContext } from "../../context/GalleryContext";
 import Alert from "../common/Alert";
 import exifr from "exifr";
+import { formatCoordinatesWithPlace, augmentLocationString } from "../../utils/geoUtils";
 import {
   CloudArrowUpIcon,
   SparklesIcon,
@@ -54,6 +55,10 @@ const Upload = () => {
         xmp: true,
         jfif: true,
         ihdr: true,
+        gps: true,
+        exif: true,
+        iptc: true,
+        mergeOutput: true,
       });
 
       if (exif) {
@@ -66,7 +71,7 @@ const Upload = () => {
         }
 
         // 2. Camera Type Heuristic
-        let detectedType = "Dedicated Camera";
+        let detectedType = "";
         const lowerCam = detectedCamera.toLowerCase();
         if (
           lowerCam.includes("apple") ||
@@ -74,7 +79,9 @@ const Upload = () => {
           lowerCam.includes("pixel") ||
           lowerCam.includes("samsung") ||
           lowerCam.includes("galaxy") ||
-          lowerCam.includes("xiaomi")
+          lowerCam.includes("xiaomi") ||
+          lowerCam.includes("oneplus") ||
+          lowerCam.includes("huawei")
         ) {
           detectedType = "Smartphone";
         } else if (
@@ -102,19 +109,31 @@ const Upload = () => {
           lowerCam.includes("d750")
         ) {
           detectedType = "DSLR";
+        } else if (detectedCamera) {
+          detectedType = "Dedicated Camera";
         }
 
         // 3. Resolution
         let detectedRes = "";
         if (exif.ImageWidth && exif.ImageHeight) {
           detectedRes = `${exif.ImageWidth}x${exif.ImageHeight}`;
+        } else if (exif.ExifImageWidth && exif.ExifImageHeight) {
+          detectedRes = `${exif.ExifImageWidth}x${exif.ExifImageHeight}`;
         }
 
         // 4. Capture Date & Time
         let detectedDate = "";
-        const dateObj = exif.DateTimeOriginal || exif.CreateDate || exif.ModifyDate;
-        if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
-          // Format as YYYY-MM-DDTHH:mm for datetime-local
+        const rawDate = exif.DateTimeOriginal || exif.CreateDate || exif.ModifyDate || exif.DateTimeDigitized || exif.DateCreated;
+        let dateObj = null;
+        if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
+          dateObj = rawDate;
+        } else if (typeof rawDate === "string") {
+          // EXIF date format is often "YYYY:MM:DD HH:MM:SS"
+          const cleaned = rawDate.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
+          const parsed = new Date(cleaned);
+          if (!isNaN(parsed.getTime())) dateObj = parsed;
+        }
+        if (dateObj) {
           const pad = (n) => String(n).padStart(2, "0");
           detectedDate = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(
             dateObj.getDate()
@@ -123,25 +142,31 @@ const Upload = () => {
 
         // 5. Aperture
         let detectedAperture = "";
-        if (exif.FNumber) {
-          detectedAperture = `f/${Number(exif.FNumber.toFixed(1))}`;
+        const fNum = exif.FNumber || exif.ApertureValue;
+        if (fNum && typeof fNum === "number") {
+          detectedAperture = `f/${Number(fNum.toFixed(1))}`;
         }
 
         // 6. Focus / Focal Length
         let detectedFocus = "";
-        if (exif.FocalLength) {
-          detectedFocus = `${Number(exif.FocalLength.toFixed(1))}mm`;
+        const fLen = exif.FocalLength || exif.FocalLengthIn35mmFormat;
+        if (fLen && typeof fLen === "number") {
+          detectedFocus = `${Number(fLen.toFixed(1))}mm`;
         }
 
-        // 7. Location Coordinates
+        // 7. Location Coordinates / GPS & Map Place
         let detectedLoc = "";
-        if (typeof exif.latitude === "number" && typeof exif.longitude === "number") {
-          detectedLoc = `${exif.latitude.toFixed(4)}°, ${exif.longitude.toFixed(4)}°`;
+        const lat = exif.latitude ?? (exif.GPSLatitude ? (Array.isArray(exif.GPSLatitude) ? exif.GPSLatitude[0] : exif.GPSLatitude) : null);
+        const lon = exif.longitude ?? (exif.GPSLongitude ? (Array.isArray(exif.GPSLongitude) ? exif.GPSLongitude[0] : exif.GPSLongitude) : null);
+        if (typeof lat === "number" && typeof lon === "number") {
+          detectedLoc = formatCoordinatesWithPlace(lat, lon);
+        } else if (exif.City || exif.Country || exif.Sublocation) {
+          detectedLoc = [exif.Sublocation, exif.City, exif.Country].filter(Boolean).join(", ");
         }
 
         // 8. AI Generation Traces
         const software = String(exif.Software || "").toLowerCase();
-        const desc = String(exif.ImageDescription || exif.UserComment || "").toLowerCase();
+        const desc = String(exif.ImageDescription || exif.UserComment || exif.Description || "").toLowerCase();
         const aiKeys = [
           "midjourney",
           "stable diffusion",
@@ -166,12 +191,20 @@ const Upload = () => {
           else detectedAi = "Generative AI";
         }
 
-        // Photographer from artist tag
-        const detectedArtist = exif.Artist ? String(exif.Artist).trim() : "";
+        // Photographer from OwnerName / CameraOwnerName / Artist / Creator / Copyright tags
+        const detectedOwnerOrArtist = 
+          exif.CameraOwnerName ||
+          exif.OwnerName ||
+          exif.Artist ||
+          exif.Creator ||
+          exif.Byline ||
+          exif.Copyright ||
+          "";
+        const detectedArtist = detectedOwnerOrArtist ? String(detectedOwnerOrArtist).trim() : "";
 
         const detected = {
           camera: detectedCamera,
-          cameraType: detectedType,
+          cameraType: detectedType || "Mirrorless",
           resolution: detectedRes,
           captureDate: detectedDate,
           aperture: detectedAperture,
@@ -184,22 +217,40 @@ const Upload = () => {
 
         setAutoDetectedData(detected);
 
-        // Auto-fill values if user hasn't typed anything yet!
-        if (detectedCamera) setCamera((prev) => prev || detectedCamera);
-        if (detectedType) setCameraType((prev) => prev || detectedType);
-        if (detectedRes) setResolution((prev) => prev || detectedRes);
-        if (detectedDate) setCaptureDate((prev) => prev || detectedDate);
-        if (detectedAperture) setAperture((prev) => prev || detectedAperture);
-        if (detectedFocus) setFocalLength((prev) => prev || detectedFocus);
-        if (detectedLoc) setLocation((prev) => prev || detectedLoc);
-        if (detectedArtist) setPhotographer((prev) => prev || detectedArtist);
+        // Auto-fill values
+        if (detectedCamera) setCamera(detectedCamera);
+        if (detectedType) setCameraType(detectedType);
+        if (detectedRes) setResolution(detectedRes);
+        if (detectedDate) setCaptureDate(detectedDate);
+        if (detectedAperture) setAperture(detectedAperture);
+        if (detectedFocus) setFocalLength(detectedFocus);
+        if (detectedLoc) setLocation(detectedLoc);
+        if (detectedArtist) setPhotographer(detectedArtist);
         if (isAi) {
           setIsAiGenerated(true);
-          if (detectedAi) setAiModel((prev) => prev || detectedAi);
+          if (detectedAi) setAiModel(detectedAi);
+        }
+      } else {
+        // Fallback: If no EXIF segment exists, pull file modified time as date fallback
+        if (selectedFile.lastModified) {
+          const dateObj = new Date(selectedFile.lastModified);
+          const pad = (n) => String(n).padStart(2, "0");
+          const fallbackDate = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(
+            dateObj.getDate()
+          )}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+          setCaptureDate((prev) => prev || fallbackDate);
         }
       }
     } catch (e) {
       console.log("No EXIF metadata in file:", e);
+      if (selectedFile.lastModified) {
+        const dateObj = new Date(selectedFile.lastModified);
+        const pad = (n) => String(n).padStart(2, "0");
+        const fallbackDate = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(
+          dateObj.getDate()
+        )}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+        setCaptureDate((prev) => prev || fallbackDate);
+      }
     } finally {
       setIsParsingExif(false);
     }

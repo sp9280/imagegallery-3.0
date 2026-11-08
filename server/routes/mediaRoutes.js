@@ -71,6 +71,8 @@ router.put('/:mediaId/hide', interactionController.toggleHide);
 router.get('/:mediaId/hide-history', interactionController.getHideHistory);
 router.put('/:mediaId/edit', interactionController.editMedia);
 router.delete('/:mediaId/comments/:commentId', interactionController.deleteComment);
+router.post('/:mediaId/request-unlock', interactionController.requestUnlock);
+router.post('/:mediaId/resolve-unlock', interactionController.resolveUnlock);
 
 // Bulk operations (admin/coadmin only - checked in controller)
 router.post('/bulk/hide', interactionController.bulkHide);

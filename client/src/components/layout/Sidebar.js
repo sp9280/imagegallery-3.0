@@ -169,6 +169,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   <span>Manage Users</span>
                 </Link>
                 <Link
+                  to="/admin/images"
+                  onClick={toggleSidebar}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <PhotoIcon className="w-5 h-5" />
+                  <span>Manage Images</span>
+                </Link>
+                <Link
                   to="/admin/dashboard"
                   onClick={toggleSidebar}
                   className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
