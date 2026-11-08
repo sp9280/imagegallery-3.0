@@ -30,7 +30,27 @@ const getAdminDashboard = async (req, res) => {
 
     const recentActivity = recentMedia.map(media => ({
       description: `${media.user?.username || 'User'} uploaded "${media.title}"`,
-      timestamp: media.createdAt
+      timestamp: media.createdAt,
+      mediaId: media._id,
+      title: media.title,
+      url: media.url,
+      isPublic: media.isPublic,
+      author: media.user?.username || 'Unknown',
+      likes: media.likes?.length || 0,
+      commentsCount: media.comments?.length || 0,
+    }));
+
+    // Fetch all pictures so the admin can monitor every picture on their dashboard
+    const allPictures = recentMedia.map(media => ({
+      _id: media._id,
+      title: media.title,
+      url: media.url,
+      isPublic: media.isPublic,
+      category: media.category,
+      createdAt: media.createdAt,
+      author: media.user?.username || 'Unknown',
+      likesCount: media.likes?.length || 0,
+      commentsCount: media.comments?.length || 0,
     }));
 
     const dashboardData = {
@@ -38,7 +58,8 @@ const getAdminDashboard = async (req, res) => {
       totalUsers,
       totalComments,
       totalLikes,
-      recentActivity
+      recentActivity,
+      recentPictures: allPictures,
     };
 
     logger.info('Admin dashboard data retrieved');

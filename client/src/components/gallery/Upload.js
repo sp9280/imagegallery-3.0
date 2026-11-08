@@ -485,10 +485,10 @@ const Upload = () => {
           {/* ========================================================
               TECHNICAL IMAGE DNA (Camera, Resolution, Aperture, Date, AI)
           ======================================================== */}
-          <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-6">
+          <div className="pt-6 border-t border-cyan-200/60 dark:border-slate-800 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CameraIcon className="w-5 h-5 text-cyan-400" />
+                <CameraIcon className="w-5 h-5 text-cyan-500 dark:text-cyan-400" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Technical Shot Details (Image DNA)
                 </h3>
@@ -509,7 +509,7 @@ const Upload = () => {
                   placeholder="e.g. Sony A7 IV, Canon EOS R5"
                   value={camera}
                   onChange={(e) => setCamera(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
 
@@ -520,7 +520,7 @@ const Upload = () => {
                 <select
                   value={cameraType}
                   onChange={(e) => setCameraType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 >
                   <option value="Mirrorless">Mirrorless</option>
                   <option value="DSLR">DSLR</option>
@@ -541,7 +541,7 @@ const Upload = () => {
                   placeholder="e.g. 6000x4000 (4K/6K)"
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
             </div>
@@ -557,7 +557,7 @@ const Upload = () => {
                   placeholder="e.g. f/1.8, f/2.8, f/8"
                   value={aperture}
                   onChange={(e) => setAperture(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
 
@@ -570,7 +570,7 @@ const Upload = () => {
                   placeholder="e.g. 50mm, 24-70mm"
                   value={focalLength}
                   onChange={(e) => setFocalLength(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
 
@@ -582,7 +582,7 @@ const Upload = () => {
                   type="datetime-local"
                   value={captureDate}
                   onChange={(e) => setCaptureDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
             </div>
@@ -599,7 +599,7 @@ const Upload = () => {
                   placeholder="e.g. Kyoto, Japan or 35.6762°, 139.6503°"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
 
@@ -612,7 +612,7 @@ const Upload = () => {
                   placeholder="e.g. Your Name or Studio Handle"
                   value={photographer}
                   onChange={(e) => setPhotographer(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-cyan-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
               </div>
             </div>

@@ -146,11 +146,17 @@ class QueryChain {
     if (typeof selectInput === 'string') {
       const fields = selectInput.split(' ').map(f => f.trim()).filter(Boolean);
       const exclude = fields.filter(f => f.startsWith('-')).map(f => f.slice(1));
-      const include = fields.filter(f => !f.startsWith('-') && !f.startsWith('+'));
+      const explicitInclude = fields.filter(f => f.startsWith('+')).map(f => f.slice(1));
+      const normalInclude = fields.filter(f => !f.startsWith('-') && !f.startsWith('+'));
+
       if (exclude.length > 0) {
         this._attributes = { exclude };
-      } else if (include.length > 0) {
-        this._attributes = sanitizeAttributes(include);
+      } else if (normalInclude.length > 0) {
+        this._attributes = sanitizeAttributes([...normalInclude, ...explicitInclude]);
+      } else if (explicitInclude.length > 0) {
+        // If only +field was requested (e.g. select("+password")),
+        // do not restrict attributes so all default model attributes (including password) are loaded.
+        this._attributes = null;
       }
     }
     return this;

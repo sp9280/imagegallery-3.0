@@ -31,7 +31,11 @@ const Login = () => {
       login(res.data.data.user, res.data.data.token);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email/username or password");
+      if (!err.response) {
+        setError("Cannot connect to backend server. Please verify the server is running on port 4000.");
+      } else {
+        setError(err.response?.data?.message || "Invalid email/username or password");
+      }
     } finally {
       setLoading(false);
     }

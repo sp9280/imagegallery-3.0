@@ -4,7 +4,6 @@ import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
 import Spinner from "../common/Spinner";
 import Alert from "../common/Alert";
-import Layout from "../layout/Layout";
 import { 
   FiUsers, FiUserPlus, FiX, FiCheck, FiShield, 
   FiUserCheck, FiUserX, FiTrash2, FiInfo, FiEdit2 
@@ -42,9 +41,10 @@ const ManageUsers = () => {
 
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
-      await api.patch(`/admin/users/${userId}`, { active: !currentStatus });
+      const nextStatus = !currentStatus;
+      await api.patch(`/admin/users/${userId}`, { active: nextStatus, isActive: nextStatus });
       setUsers(users.map(user =>
-        user._id === userId ? { ...user, active: !currentStatus } : user
+        user._id === userId ? { ...user, active: nextStatus, isActive: nextStatus } : user
       ));
       setSuccess("User status updated successfully");
     } catch (err) {
@@ -97,11 +97,10 @@ const ManageUsers = () => {
     }
   };
 
-  if (loading) return <Layout><Spinner /></Layout>;
+  if (loading) return <Spinner />;
 
   return (
-    <Layout>
-      <div className="manage-users px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="manage-users px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -251,7 +250,9 @@ const ManageUsers = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user, index) => (
+                {users.map((user, index) => {
+                  const isUserActive = user.isActive !== undefined ? user.isActive : (user.active !== undefined ? user.active : true);
+                  return (
                   <motion.tr
                     key={user._id}
                     initial={{ opacity: 0, y: 10 }}
@@ -298,11 +299,11 @@ const ManageUsers = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold ${
-                        user.active 
+                        isUserActive 
                           ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-200' 
                           : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-200'
                       }`}>
-                        {user.active ? (
+                        {isUserActive ? (
                           <>
                             <FiCheck size={14} />
                             Active
@@ -321,18 +322,18 @@ const ManageUsers = () => {
                     <td className="px-6 py-4">
                       <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() => toggleUserStatus(user._id, user.active)}
+                          onClick={() => toggleUserStatus(user._id, isUserActive)}
                           disabled={user._id === currentUser?._id}
                           className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 ${
                             user._id === currentUser?._id 
                               ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed' 
-                              : user.active
+                              : isUserActive
                                 ? "bg-warning-500 hover:bg-warning-600 text-white shadow-md hover:shadow-lg"
                                 : "bg-success-500 hover:bg-success-600 text-white shadow-md hover:shadow-lg"
                           }`}
-                          title={user.active ? "Deactivate User" : "Activate User"}
+                          title={isUserActive ? "Deactivate User" : "Activate User"}
                         >
-                          {user.active ? (
+                          {isUserActive ? (
                             <>
                               <FiUserX size={16} />
                               Deactivate
@@ -360,7 +361,8 @@ const ManageUsers = () => {
                       </div>
                     </td>
                   </motion.tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>
@@ -410,7 +412,6 @@ const ManageUsers = () => {
           </div>
         </motion.div>
       </div>
-    </Layout>
   );
 };
 

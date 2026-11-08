@@ -172,6 +172,8 @@ const addComment = async (req, res) => {
     const { mediaId } = req.params;
     const { text, name, email } = req.body;
     const clientIP = getClientIP(req);
+    const rawDeviceId = req.headers['x-device-id'] || req.headers['x-client-id'] || req.headers['x-mac-address'] || '';
+    const clientMacOrDevice = typeof rawDeviceId === 'string' ? rawDeviceId.trim() : '';
     const userId = req.user?.id;
 
     // Validate comment text
@@ -193,16 +195,16 @@ const addComment = async (req, res) => {
       return response.error(res, 'Media not found', 404);
     }
 
-    // Check if public comment requires name
-    if (!userId && !name) {
-      return response.error(res, 'Name is required for public comments', 400);
-    }
+    // Default to 'Guest / Unknown' if no name provided
+    const authorName = (name && name.trim()) ? name.trim() : 'Guest';
 
-    // Prepare comment object
+    // Prepare comment object with IP and device/client identifier verification
     const comment = {
       text: text.trim(),
       isPublic: !userId,
       ipAddress: clientIP,
+      macAddress: clientMacOrDevice || undefined,
+      deviceId: clientMacOrDevice || undefined,
       createdAt: new Date(),
     };
 
@@ -214,8 +216,9 @@ const addComment = async (req, res) => {
         comment.username = user.username;
       }
     } else {
-      // Public comment
-      comment.name = name?.trim();
+      // Public / guest comment
+      comment.name = authorName;
+      comment.username = authorName;
       if (email) {
         comment.email = email?.trim();
       }
@@ -228,7 +231,7 @@ const addComment = async (req, res) => {
     media.comments.push(comment);
     await media.save();
 
-    logger.info(`✅ Comment added to media ${mediaId}`);
+    logger.info(`✅ Comment added to media ${mediaId} from IP: ${clientIP}`);
     response.success(res, 'Comment added successfully', {
       comment,
       totalComments: media.comments.length,

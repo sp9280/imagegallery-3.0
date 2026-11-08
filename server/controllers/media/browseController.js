@@ -72,15 +72,29 @@ const getCategories = async (req, res) => {
 const getUserMedia = async (req, res) => {
   try {
     const userId = req.user.id || req.user._id || req.user.userId;
-    const query = {};
+    const isAdmin = req.user.role === 'admin';
+    let query = {};
 
-    // Admin has access to all media if query param all=true or by default in admin studio
-    if (req.user.role === 'admin' && req.query.scope === 'all') {
-      // Fetch all media across platform
-    } else if (req.user.role === 'admin' && req.query.userId) {
-      query.user = req.query.userId;
+    if (isAdmin && req.query.scope === 'all') {
+      // In general user view, an image that was set private by its uploader
+      // should only be accessible to that user, not in the public feed or other users' profiles.
+      // But admin can see uploaded pictures on their admin dashboard.
+      // If fetching global scope in user media, filter out other users' private uploads:
+      query = {
+        $or: [
+          { user: userId },
+          { isPublic: true }
+        ]
+      };
+    } else if (isAdmin && req.query.userId) {
+      if (req.query.userId === userId) {
+        query.user = userId;
+      } else {
+        // Viewing another specific user: only their public uploads
+        query = { user: req.query.userId, isPublic: true };
+      }
     } else {
-      // Regular user: shows ALL their uploaded works (both public and private)
+      // Regular user: shows ALL their own uploaded works (both public and private)
       query.user = userId;
     }
     

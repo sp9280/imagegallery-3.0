@@ -48,6 +48,7 @@ router.post('/users', async (req, res) => {
       email,
       password: hashedPassword,
       role: userRole || 'user',
+      isActive: true,
       active: true
     });
     
@@ -70,7 +71,11 @@ router.patch('/users/:userId', async (req, res) => {
       return response.error(res, 'User not found', 404);
     }
     
-    if (active !== undefined) user.active = active;
+    const targetActive = active !== undefined ? active : req.body.isActive;
+    if (targetActive !== undefined) {
+      user.active = targetActive;
+      user.isActive = targetActive;
+    }
     if (userRole !== undefined) user.role = userRole;
     
     await user.save();

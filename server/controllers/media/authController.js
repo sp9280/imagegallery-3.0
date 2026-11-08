@@ -82,12 +82,16 @@ exports.login = async (req, res) => {
     if (!identifier || !password)
       return res.status(400).json({ message: "Email/username and password required" });
 
+    const trimmedIdentifier = identifier.trim();
+
+    // Query by email (case-insensitive) or username
     const user = await User.findOne({
-      $or: [{ email: identifier.toLowerCase() }, { username: identifier }],
-    }).select("+password");
+      $or: [{ email: trimmedIdentifier.toLowerCase() }, { username: trimmedIdentifier }],
+    });
 
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
+    // Compare password with hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 

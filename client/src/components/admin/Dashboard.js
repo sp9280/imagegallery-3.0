@@ -190,7 +190,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-700"
+          className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-700 mb-12"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-gradient-to-br from-primary-500 to-accent-500 p-3 rounded-xl">
@@ -244,6 +244,69 @@ const Dashboard = () => {
             )}
           </div>
         </motion.div>
+
+        {/* Admin Uploaded Pictures Overview (Admin can monitor all uploaded pictures) */}
+        {dashboardData.recentPictures && dashboardData.recentPictures.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-700"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl">
+                  <FiImage className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Platform Uploads Monitor
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Admin view of all uploaded images (including private and public works)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {dashboardData.recentPictures.map((pic) => (
+                <div
+                  key={pic._id}
+                  className="group relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900"
+                >
+                  <div className="aspect-square overflow-hidden bg-black/40">
+                    <img
+                      src={pic.url?.startsWith("http") ? pic.url : `${(process.env.REACT_APP_API_URL || "http://localhost:4000/api").replace("/api", "")}${pic.url}`}
+                      alt={pic.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80";
+                      }}
+                    />
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        pic.isPublic
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}>
+                        {pic.isPublic ? "Public" : "Private"}
+                      </span>
+                      <span className="text-[10px] text-gray-400 truncate max-w-[80px]">
+                        by {pic.author}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                      {pic.title || "Untitled"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

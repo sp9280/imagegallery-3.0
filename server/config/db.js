@@ -74,6 +74,42 @@ const connectDB = async () => {
     // 3. Sync tables
     await sequelize.sync({ alter: false });
     logger.info('MySQL/MariaDB tables synchronized successfully');
+
+    // 4. Ensure default demo accounts exist on database connect
+    try {
+      const bcrypt = require('bcryptjs');
+      const User = require('../models/User');
+
+      const admin = await User.findOne({ email: 'admin@example.com' });
+      if (!admin) {
+        const hashedAdminPassword = await bcrypt.hash('Admin@123', 10);
+        await User.create({
+          username: 'admin',
+          email: 'admin@example.com',
+          password: hashedAdminPassword,
+          role: 'admin',
+          isActive: true,
+          isEmailVerified: true
+        });
+        logger.info('Auto-seeded default admin: admin@example.com / Admin@123');
+      }
+
+      const user = await User.findOne({ email: 'user@example.com' });
+      if (!user) {
+        const hashedUserPassword = await bcrypt.hash('User@123', 10);
+        await User.create({
+          username: 'user',
+          email: 'user@example.com',
+          password: hashedUserPassword,
+          role: 'user',
+          isActive: true,
+          isEmailVerified: true
+        });
+        logger.info('Auto-seeded default user: user@example.com / User@123');
+      }
+    } catch (seedErr) {
+      logger.warn(`Default accounts check notice: ${seedErr.message}`);
+    }
   } catch (err) {
     logger.error('Database connection failed:', err);
     process.exit(1);

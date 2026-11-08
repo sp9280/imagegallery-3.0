@@ -43,6 +43,7 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
   const [editedDetails, setEditedDetails] = useState({
     title: item.title || "",
     description: item.description || "",
+    isPublic: item.isPublic !== false,
     photographer: item.metadata?.artist || "",
     location: item.metadata?.locationText || "",
     camera: item.metadata?.cameraModel || "",
@@ -168,6 +169,7 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
       const updates = {
         title: editedDetails.title,
         description: editedDetails.description,
+        isPublic: editedDetails.isPublic,
         metadata: {
           ...metadata,
           artist: editedDetails.photographer || undefined,
@@ -448,9 +450,99 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
             {/* Moderation Actions (Owner or Admin) */}
             {canModerate && (
               <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
-                  Creator & Moderation Controls
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                    {isAdmin && !isOwner ? "Admin Moderation Controls" : "Creator & Moderation Controls"}
+                  </span>
+                  <button
+                    onClick={() => setIsEditingDetails(!isEditingDetails)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-colors"
+                  >
+                    <PencilSquareIcon className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isEditingDetails ? "Close Editor" : "Edit Details"}</span>
+                  </button>
+                </div>
+
+                {/* Inline Metadata & Privacy Editor */}
+                {isEditingDetails && (
+                  <div className="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-3 text-xs">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={editedDetails.title}
+                        onChange={(e) => setEditedDetails({ ...editedDetails, title: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-white focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Description</label>
+                      <textarea
+                        rows={2}
+                        value={editedDetails.description}
+                        onChange={(e) => setEditedDetails({ ...editedDetails, description: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-white focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+                    {/* Privacy Toggle (Can make image private or public) */}
+                    <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                      <div>
+                        <span className="block text-xs font-bold text-white">Visibility Mode</span>
+                        <span className="text-[10px] text-slate-400">
+                          {editedDetails.isPublic ? "Public (Visible in feed)" : "Private (Only accessible to uploader)"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditedDetails({ ...editedDetails, isPublic: !editedDetails.isPublic })}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                          editedDetails.isPublic
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                            : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        }`}
+                      >
+                        {editedDetails.isPublic ? "Public" : "Private"}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Artist / Credit</label>
+                        <input
+                          type="text"
+                          value={editedDetails.photographer}
+                          onChange={(e) => setEditedDetails({ ...editedDetails, photographer: e.target.value })}
+                          className="w-full px-2.5 py-1 rounded-lg bg-white/5 border border-white/15 text-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Camera</label>
+                        <input
+                          type="text"
+                          value={editedDetails.camera}
+                          onChange={(e) => setEditedDetails({ ...editedDetails, camera: e.target.value })}
+                          className="w-full px-2.5 py-1 rounded-lg bg-white/5 border border-white/15 text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSaveDetails}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold hover:brightness-110 transition-all text-xs"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingDetails(false)}
+                        className="py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setShowHideReasonModal(true)}
@@ -516,7 +608,15 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
                     <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-bold text-cyan-300">{c.username || c.name || "Community Member"}</span>
-                        <span className="text-[10px] text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-2">
+                          {isAdmin && (c.ipAddress || c.deviceId || c.macAddress) && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-cyan-950/60 text-cyan-400 border border-cyan-500/30">
+                              {c.ipAddress ? `IP: ${c.ipAddress}` : ''}
+                              {c.macAddress || c.deviceId ? ` | Dev: ${(c.macAddress || c.deviceId).slice(0, 10)}...` : ''}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                       <p className="text-xs text-slate-200">{c.text}</p>
                     </div>
