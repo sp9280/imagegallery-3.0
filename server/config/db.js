@@ -1,24 +1,24 @@
 // server/config/db.js
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { sequelize } = require('./database');
 const mysql = require('mysql2/promise');
 const { spawn } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 const logger = require('./logger');
 
 const DB_HOST = process.env.DB_HOST || '127.0.0.1';
 const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10);
 const DB_NAME = process.env.DB_NAME || 'imagegallery';
 const DB_USER = process.env.DB_USER || 'root';
-const DB_PASSWORD = process.env.DB_PASSWORD ? process.env.DB_PASSWORD : null;
+const DB_PASSWORD = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : null;
+const MYSQLD_PATH = process.env.MYSQLD_PATH || '';
+const DB_DATA_DIR = process.env.DB_DATA_DIR || path.resolve(__dirname, '../data');
 
 async function ensureMysqldRunning() {
-  const mysqldPath = 'C:\\Program Files\\MariaDB 12.3\\bin\\mysqld.exe';
-  const dataDir = path.resolve(__dirname, '../data');
-
-  if (fs.existsSync(mysqldPath) && fs.existsSync(dataDir)) {
+  if (MYSQLD_PATH && fs.existsSync(MYSQLD_PATH) && fs.existsSync(DB_DATA_DIR)) {
     logger.info(`Starting local MySQL/MariaDB server on port ${DB_PORT}...`);
-    const child = spawn(mysqldPath, [`--datadir=${dataDir}`, `--port=${DB_PORT}`], {
+    const child = spawn(MYSQLD_PATH, [`--datadir=${DB_DATA_DIR}`, `--port=${DB_PORT}`], {
       detached: true,
       stdio: 'ignore'
     });
@@ -29,19 +29,21 @@ async function ensureMysqldRunning() {
 
 const connectDB = async () => {
   try {
-    // 1. Ensure database exists (with auto-start if server not reachable)
+    // 1. Ensure database exists (with auto-start if server binary is configured)
     const connConfig = {
       host: DB_HOST,
       port: DB_PORT,
       user: DB_USER
     };
-    if (DB_PASSWORD) connConfig.password = DB_PASSWORD;
+    if (DB_PASSWORD !== null && DB_PASSWORD !== undefined) {
+      connConfig.password = DB_PASSWORD;
+    }
 
     let connection;
     try {
       connection = await mysql.createConnection(connConfig);
     } catch (connectErr) {
-      if (connectErr.code === 'ECONNREFUSED' || connectErr.message.includes('ECONNREFUSED')) {
+      if (connectErr.code === 'ECONNREFUSED' || connectErr.message?.includes('ECONNREFUSED')) {
         await ensureMysqldRunning();
         try {
           connection = await mysql.createConnection(connConfig);
