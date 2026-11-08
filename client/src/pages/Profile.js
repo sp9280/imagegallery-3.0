@@ -5,7 +5,6 @@ import api from "../services/api";
 import userService from "../services/userService";
 import Spinner from "../components/common/Spinner";
 import Alert from "../components/common/Alert";
-import Layout from "../components/layout/Layout";
 import MediaCard from "../components/gallery/MediaCard";
 
 const Profile = () => {
@@ -72,11 +71,10 @@ const Profile = () => {
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (loading) return <Layout><Spinner /></Layout>;
+  if (loading) return <Spinner />;
 
   return (
-    <Layout>
-      <div className="profile-page p-6 max-w-6xl mx-auto">
+    <div className="profile-page p-6 max-w-6xl mx-auto">
         <div className="profile-header mb-8 text-center profile-card">
           <h1 className="text-5xl font-extrabold gradient-text mb-3 neon-text">
             My Profile
@@ -229,7 +227,7 @@ const Profile = () => {
           </div>
           
           {userMedia.length > 0 ? (
-            <div className="gallery-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {userMedia.map(item => (
                 <MediaCard key={item._id} item={item} onUpdate={fetchUserMedia} />
               ))}
@@ -247,7 +245,6 @@ const Profile = () => {
           )}
         </div>
       </div>
-    </Layout>
   );
 };
 

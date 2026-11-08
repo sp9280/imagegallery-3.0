@@ -1,25 +1,33 @@
 // client/src/components/layout/Header.js
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import LogoutButton from "../auth/LogoutButton";
 import { toggleTheme, getCurrentTheme } from "../../styles/theme";
 import {
   Bars3Icon,
+  XMarkIcon,
   MagnifyingGlassIcon,
   SunIcon,
   MoonIcon,
   CloudArrowUpIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  PhotoIcon,
+  Squares2X2Icon,
+  ShieldCheckIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 
 const Header = ({ toggleSidebar, isSidebarOpen }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const searchInputRef = useRef(null);
+
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const handleToggleTheme = () => {
@@ -31,24 +39,35 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
     const params = new URLSearchParams(location.search);
     setSearchTerm(params.get("search") || "");
     setSelectedCategory(params.get("category") || "all");
-  }, [location.search]);
+    setIsMobileMenuOpen(false);
+  }, [location.search, location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Keyboard shortcut Ctrl+K or / to focus search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     const params = new URLSearchParams();
-    const trimmedSearch = searchTerm.trim();
+    const trimmed = searchTerm.trim();
 
-    if (trimmedSearch) {
-      params.set("search", trimmedSearch);
-    }
+    if (trimmed) params.set("search", trimmed);
     if (selectedCategory && selectedCategory !== "all") {
       params.set("category", selectedCategory);
     }
@@ -56,100 +75,219 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
     navigate(`/${query ? `?${query}` : ""}`);
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    const params = new URLSearchParams(location.search);
+    params.delete("search");
+    const query = params.toString();
+    navigate(`/${query ? `?${query}` : ""}`);
+  };
+
+  const categories = [
+    { label: "All", value: "all" },
+    { label: "Nature", value: "Nature" },
+    { label: "Architecture", value: "Architecture" },
+    { label: "Art", value: "Art" },
+    { label: "General", value: "General" }
+  ];
+
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${isScrolled
-          ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border-slate-200 dark:border-slate-800 py-2"
-          : "bg-white dark:bg-slate-900 border-transparent py-4"
-        }`}
+    <header
+      className={`sticky top-0 z-40 w-full transition-all duration-300 border-b ${
+        isScrolled
+          ? "bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border-slate-200/80 dark:border-slate-800/80 shadow-sm"
+          : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-slate-200/50 dark:border-slate-800/50"
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-6">
+          {/* Left: Sidebar Toggle + Brand Logo */}
+          <div className="flex items-center gap-3">
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-              aria-label="Toggle sidebar"
+              className="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors focus:outline-none"
+              aria-label="Toggle menu"
+              title="Toggle sidebar drawer"
             >
-              <Bars3Icon className="w-6 h-6" />
-            </button>
-
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform">
-                P
-              </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300">
-                PixelClub
-              </span>
-            </Link>
-          </div>
-
-          {/* Search Bar - Hidden on mobile, shown on md+ */}
-          <div className="hidden md:flex flex-1 max-w-lg mx-8">
-            <form onSubmit={handleSearchSubmit} className="w-full relative group">
-              <input
-                type="text"
-                placeholder="Search images..."
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <MagnifyingGlassIcon className="w-5 h-5 text-slate-400 absolute left-3 top-2.5 group-focus-within:text-primary-500 transition-colors" />
-            </form>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            <button
-              onClick={handleToggleTheme}
-              className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors relative overflow-hidden"
-              title="Toggle Theme"
-            >
-              {currentTheme === 'dark' ? (
-                <SunIcon className="w-5 h-5 text-amber-400" />
+              {isSidebarOpen ? (
+                <XMarkIcon className="w-5 h-5" />
               ) : (
-                <MoonIcon className="w-5 h-5 text-indigo-600" />
+                <Bars3Icon className="w-5 h-5" />
               )}
             </button>
 
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 group-hover:shadow-indigo-500/40 transition-all">
+                <PhotoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg sm:text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-slate-300 tracking-tight">
+                  ImageGallery
+                </span>
+                <span className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                  3.0
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Center: Search Bar */}
+          <div className="flex-1 max-w-xl hidden md:block">
+            <form onSubmit={handleSearchSubmit} className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">
+                <MagnifyingGlassIcon className="w-4 h-4" />
+              </div>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search images, artists, or keywords... (Ctrl+K)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-24 py-2 sm:py-2.5 text-sm rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 border border-transparent focus:border-indigo-500/40 dark:focus:border-indigo-400/40 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+              />
+              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                  >
+                    <XMarkIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-white dark:bg-slate-700 rounded border border-slate-200 dark:border-slate-600 shadow-xs">
+                  ⌘K
+                </kbd>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Navigation & User Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Explore Link */}
+            <Link
+              to="/"
+              className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === "/"
+                  ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>Explore</span>
+            </Link>
+
+            {/* Admin Badge/Link if user is admin */}
+            {user?.role === "admin" && (
+              <Link
+                to="/admin"
+                className="hidden lg:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
+                title="Admin Panel"
+              >
+                <ShieldCheckIcon className="w-4 h-4" />
+                <span>Admin</span>
+              </Link>
+            )}
+
+            {/* Theme Toggle */}
+            <button
+              onClick={handleToggleTheme}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-all focus:outline-none"
+              title={`Switch to ${currentTheme === "dark" ? "Light" : "Dark"} Mode`}
+              aria-label="Toggle Theme"
+            >
+              {currentTheme === "dark" ? (
+                <SunIcon className="w-5 h-5 text-amber-400 hover:rotate-45 transition-transform" />
+              ) : (
+                <MoonIcon className="w-5 h-5 text-indigo-600 hover:-rotate-12 transition-transform" />
+              )}
+            </button>
+
+            {/* Auth Actions */}
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Upload Button */}
                 <Link
                   to="/upload"
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500 hover:bg-primary-600 text-white font-medium text-sm transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 hover:-translate-y-0.5"
+                  className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
                 >
                   <CloudArrowUpIcon className="w-4 h-4" />
-                  <span>Upload</span>
+                  <span className="hidden sm:inline">Upload</span>
                 </Link>
 
-                <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block mx-0.5" />
 
-                <div className="flex items-center gap-3">
-                  <span className="hidden lg:block text-sm font-medium text-slate-700 dark:text-slate-200">
+                {/* Profile Pill */}
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="My Profile"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                    {user.username?.charAt(0).toUpperCase() || "U"}
+                  </div>
+                  <span className="hidden xl:inline text-xs font-semibold text-slate-700 dark:text-slate-200 max-w-[100px] truncate">
                     {user.username}
                   </span>
+                </Link>
+
+                <div className="hidden sm:block">
                   <LogoutButton />
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="px-5 py-2 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
-                  Login
+                  Log In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
                 >
                   Sign Up
                 </Link>
               </div>
             )}
+
+            {/* Mobile search / menu toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden"
+              aria-label="Toggle mobile menu"
+            >
+              <MagnifyingGlassIcon className="w-5 h-5" />
+            </button>
           </div>
         </div>
+
+        {/* Mobile Search Drawer (collapsible) */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden py-3 pb-4 border-t border-slate-200/60 dark:border-slate-800/60 animate-fade-in">
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <input
+                type="text"
+                placeholder="Search photos, artists..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-10 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <MagnifyingGlassIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="p-1 rounded-full text-slate-400 absolute right-2.5 top-2.5"
+                >
+                  <XMarkIcon className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </form>
+          </div>
+        )}
       </div>
-    </nav>
+    </header>
   );
 };
 

@@ -1,62 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import Header from './Header';
-import Sidebar from './Sidebar';
-import { useLocation } from 'react-router-dom';
+// client/src/components/layout/Layout.js
+import React, { useState, useEffect } from "react";
+import Header from "./Header";
+import Sidebar from "./Sidebar";
+import Footer from "./Footer";
+import { useLocation } from "react-router-dom";
 
 const Layout = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 
+  // Close sidebar on route change
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setIsMobile(true);
-        setIsSidebarOpen(false);
-      } else {
-        setIsMobile(false);
-        setIsSidebarOpen(true);
-      }
-    };
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // auto-close sidebar on mobile when route changes
-  useEffect(() => {
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
-  }, [location, isMobile]);
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+      {/* Ambient background glow orbs */}
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed top-1/3 right-10 w-96 h-96 bg-purple-500/10 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed bottom-10 left-1/3 w-96 h-96 bg-pink-500/10 dark:bg-pink-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* Main sticky navigation */}
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
-      <div className="flex pt-16 h-screen overflow-hidden">
-        <Sidebar isOpen={isSidebarOpen} isMobile={isMobile} toggleSidebar={toggleSidebar} />
+      {/* Slide-out sidebar drawer */}
+      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-        <main
-          className={`flex-1 overflow-auto transition-all duration-300 p-4 md:p-6 ${!isMobile && isSidebarOpen ? 'md:ml-64' : 'ml-0'
-            }`}
-        >
-          <div className="max-w-7xl mx-auto animate-fade-in">
-            {children}
-          </div>
-        </main>
-      </div>
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {children}
+      </main>
 
-      {/* Mobile overlay */}
-      {isMobile && isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm animate-fade-in"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {/* Modern Global Footer */}
+      <Footer />
     </div>
   );
 };
