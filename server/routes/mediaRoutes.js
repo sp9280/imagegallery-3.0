@@ -50,6 +50,8 @@ router.get('/categories', browseController.getCategories);
 // Public interaction routes (no auth required for like checking and comments)
 router.post('/interaction/:mediaId/like', interactionController.toggleLike);
 router.get('/interaction/:mediaId/like-status', interactionController.checkLikeStatus);
+router.post('/:mediaId/like', interactionController.toggleLike); // Route alias
+router.get('/:mediaId/like-status', interactionController.checkLikeStatus); // Route alias
 router.post('/interaction/:mediaId/comments', interactionController.addComment);
 router.get('/interaction/:mediaId/comments', interactionController.getComments);
 router.get('/media-status/:mediaId', interactionController.getMediaWithStatus);

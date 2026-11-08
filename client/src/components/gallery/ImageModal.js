@@ -102,9 +102,13 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
       setLikes(prevLiked ? Math.max(0, prevCount - 1) : prevCount + 1);
 
       const response = await mediaService.toggleLike(item._id);
-      if (response?.likes !== undefined) {
-        setLiked(response.isLiked);
-        setLikes(response.likes);
+      const newLikes = response?.likes ?? response?.data?.likes;
+      const newIsLiked = response?.isLiked ?? response?.data?.isLiked;
+      if (newLikes !== undefined) {
+        setLikes(newLikes);
+      }
+      if (newIsLiked !== undefined) {
+        setLiked(newIsLiked);
       }
       if (onUpdate) onUpdate();
     } catch (error) {

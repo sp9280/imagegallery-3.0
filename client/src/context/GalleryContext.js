@@ -38,12 +38,13 @@ export const GalleryProvider = ({ children }) => {
   // Like media
   const likeMedia = async (id) => {
     try {
-      const res = await api.post(`/media/${id}/like`);
-      if (res.data?.likes !== undefined) {
+      const res = await api.post(`/media/interaction/${id}/like`);
+      const newLikes = res.data?.data?.likes ?? res.data?.likes;
+      if (newLikes !== undefined) {
         setMedia((prev) =>
           prev.map((item) =>
             item._id === id
-              ? { ...item, likes: Array(res.data.likes).fill(1) } // simple numeric update
+              ? { ...item, likes: newLikes }
               : item
           )
         );

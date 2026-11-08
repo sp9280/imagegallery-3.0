@@ -84,9 +84,13 @@ const MediaCard = ({ item, onUpdate }) => {
 
     try {
       const res = await toggleLike(item._id);
-      if (res?.likes !== undefined) {
-        setLikesCount(res.likes);
-        setIsLiked(res.isLiked);
+      const newLikes = res?.likes ?? res?.data?.likes;
+      const newIsLiked = res?.isLiked ?? res?.data?.isLiked;
+      if (newLikes !== undefined) {
+        setLikesCount(newLikes);
+      }
+      if (newIsLiked !== undefined) {
+        setIsLiked(newIsLiked);
       }
       if (onUpdate) onUpdate();
     } catch (err) {

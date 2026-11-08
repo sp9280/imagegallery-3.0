@@ -5,23 +5,53 @@ const response = require('../../utils/response');
 const logger = require('../../config/logger');
 
 /**
- * Get client IP address from request
+ * Get client IP address from request (normalized for localhost & proxies)
  */
 const getClientIP = (req) => {
-  return req.ip || 
-         req.headers['x-forwarded-for']?.split(',')[0] || 
-         req.headers['x-real-ip'] || 
-         req.connection.remoteAddress || 
-         'unknown';
+  let ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+           req.headers['x-real-ip'] || 
+           req.ip || 
+           req.connection?.remoteAddress || 
+           req.socket?.remoteAddress || 
+           '127.0.0.1';
+  if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+    ip = '127.0.0.1';
+  }
+  return ip;
 };
 
 /**
- * Like/Unlike media with IP-based tracking (1 IP = 1 like)
+ * Get composite client identifiers: IP, Device ID, User ID
+ * Enforces: One device, one IP = exactly one like
+ */
+const getClientIdentifiers = (req) => {
+  const ip = getClientIP(req);
+  const rawDeviceId = req.headers['x-device-id'] || req.headers['x-client-id'] || '';
+  const deviceId = typeof rawDeviceId === 'string' ? rawDeviceId.trim() : '';
+  const userId = req.user?.id || req.user?._id;
+
+  const identifiers = [];
+  if (ip && ip !== 'unknown') {
+    identifiers.push(`ip:${ip}`);
+    identifiers.push(ip); // backward compatibility with older stored entries
+  }
+  if (deviceId) {
+    identifiers.push(`dev:${deviceId}`);
+  }
+  if (userId) {
+    identifiers.push(`usr:${userId}`);
+  }
+  return { ip, deviceId, userId, identifiers };
+};
+
+/**
+ * Like/Unlike media with strict Device + IP tracking (1 Device / 1 IP = 1 like only)
+ * Multiple clicks toggle between liked and unliked, preventing repeated stacking
  */
 const toggleLike = async (req, res) => {
   try {
     const { mediaId } = req.params;
-    const clientIP = getClientIP(req);
+    const { ip, deviceId, userId, identifiers } = getClientIdentifiers(req);
 
     // Validate mediaId
     if (!mediaId || !mediaId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -33,63 +63,104 @@ const toggleLike = async (req, res) => {
       return response.error(res, 'Media not found', 404);
     }
 
-    // Check if IP already liked this media
-    const alreadyLiked = media.likedByIPs && media.likedByIPs.includes(clientIP);
+    // Safely parse current liked array
+    let currentLiked = [];
+    if (Array.isArray(media.likedByIPs)) {
+      currentLiked = [...media.likedByIPs];
+    } else if (typeof media.likedByIPs === 'string') {
+      try {
+        currentLiked = JSON.parse(media.likedByIPs);
+      } catch (e) {
+        currentLiked = [];
+      }
+    }
+
+    // Check if any identifier matches (1 IP or 1 Device = 1 Like)
+    const alreadyLiked = identifiers.some(id => currentLiked.includes(id));
 
     if (alreadyLiked) {
-      // Remove like
-      media.likedByIPs = media.likedByIPs.filter(ip => ip !== clientIP);
-      media.likes = Math.max(0, media.likes - 1);
+      // Remove like: filter out all associated identifiers for this caller
+      currentLiked = currentLiked.filter(id => !identifiers.includes(id));
+      media.likedByIPs = currentLiked;
+      media.likes = Math.max(0, (media.likes || 1) - 1);
+
+      // Force Sequelize to detect JSON update
+      media.changed('likedByIPs', true);
+      media.changed('likes', true);
       await media.save();
 
-      logger.info(`✅ Like removed from media ${mediaId} by IP ${clientIP}`);
-      response.success(res, 'Like removed', {
+      logger.info(`✅ Like removed from media ${mediaId} by Device ${deviceId || 'N/A'}, IP ${ip}`);
+      return response.success(res, 'Like removed', {
         likes: media.likes,
         isLiked: false,
       });
     } else {
-      // Add like
-      if (!media.likedByIPs) {
-        media.likedByIPs = [];
+      // Add like: record device and IP
+      if (deviceId) {
+        currentLiked.push(`dev:${deviceId}`);
       }
-      media.likedByIPs.push(clientIP);
+      if (ip && ip !== 'unknown') {
+        currentLiked.push(`ip:${ip}`);
+        currentLiked.push(ip);
+      }
+      if (userId) {
+        currentLiked.push(`usr:${userId}`);
+      }
+
+      currentLiked = Array.from(new Set(currentLiked));
+      media.likedByIPs = currentLiked;
       media.likes = (media.likes || 0) + 1;
+
+      // Force Sequelize to detect JSON update
+      media.changed('likedByIPs', true);
+      media.changed('likes', true);
       await media.save();
 
-      logger.info(`✅ Like added to media ${mediaId} by IP ${clientIP}`);
-      response.success(res, 'Like added', {
+      logger.info(`✅ Like added to media ${mediaId} by Device ${deviceId || 'N/A'}, IP ${ip}`);
+      return response.success(res, 'Like added', {
         likes: media.likes,
         isLiked: true,
       });
     }
   } catch (err) {
     logger.error('Error toggling like:', err);
-    response.error(res, 'Failed to toggle like', 500);
+    return response.error(res, 'Failed to toggle like', 500);
   }
 };
 
 /**
- * Check if current IP has liked a media
+ * Check if current device or IP has liked a media
  */
 const checkLikeStatus = async (req, res) => {
   try {
     const { mediaId } = req.params;
-    const clientIP = getClientIP(req);
+    const { identifiers } = getClientIdentifiers(req);
 
     const media = await Media.findById(mediaId);
     if (!media) {
       return response.error(res, 'Media not found', 404);
     }
 
-    const isLiked = media.likedByIPs && media.likedByIPs.includes(clientIP);
+    let currentLiked = [];
+    if (Array.isArray(media.likedByIPs)) {
+      currentLiked = media.likedByIPs;
+    } else if (typeof media.likedByIPs === 'string') {
+      try {
+        currentLiked = JSON.parse(media.likedByIPs);
+      } catch (e) {
+        currentLiked = [];
+      }
+    }
 
-    response.success(res, 'Like status retrieved', {
+    const isLiked = identifiers.some(id => currentLiked.includes(id));
+
+    return response.success(res, 'Like status retrieved', {
       isLiked,
       likes: media.likes || 0,
     });
   } catch (err) {
     logger.error('Error checking like status:', err);
-    response.error(res, 'Failed to check like status', 500);
+    return response.error(res, 'Failed to check like status', 500);
   }
 };
 

@@ -2,7 +2,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { AuthProvider } from "./context/AuthContext";
 import { GalleryProvider } from "./context/GalleryContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import Toast from "./components/common/Toast";
@@ -103,17 +102,15 @@ const App = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      <GalleryProvider>
-        <Router>
-          <Layout>
-            <Toast />
-            <TermsAndConditions />
-            <AnimatedRoutes />
-          </Layout>
-        </Router>
-      </GalleryProvider>
-    </AuthProvider>
+    <GalleryProvider>
+      <Router>
+        <Layout>
+          <Toast />
+          <TermsAndConditions />
+          <AnimatedRoutes />
+        </Layout>
+      </Router>
+    </GalleryProvider>
   );
 };
 

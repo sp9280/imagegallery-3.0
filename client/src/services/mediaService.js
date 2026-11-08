@@ -2,12 +2,13 @@
 import api from './api';
 
 /**
- * Like/Unlike media (IP-based tracking)
+ * Like/Unlike media (IP and Device based tracking)
  */
 export const toggleLike = async (mediaId) => {
   try {
     const response = await api.post(`/media/interaction/${mediaId}/like`);
-    return response.data;
+    const data = response.data?.data || {};
+    return { ...response.data, ...data };
   } catch (error) {
     console.error('Error toggling like:', error);
     throw error;
@@ -15,12 +16,13 @@ export const toggleLike = async (mediaId) => {
 };
 
 /**
- * Check if current IP has liked a media
+ * Check if current device/IP has liked a media
  */
 export const checkLikeStatus = async (mediaId) => {
   try {
     const response = await api.get(`/media/interaction/${mediaId}/like-status`);
-    return response.data;
+    const data = response.data?.data || {};
+    return { ...response.data, ...data };
   } catch (error) {
     console.error('Error checking like status:', error);
     throw error;
