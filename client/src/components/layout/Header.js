@@ -158,6 +158,19 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
               <span>Showcase</span>
             </Link>
 
+            {user && (
+              <Link
+                to="/profile"
+                className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  location.pathname === "/profile"
+                    ? "text-cyan-400 bg-cyan-400/10 border border-cyan-400/20"
+                    : "text-slate-600 dark:text-slate-300 hover:text-cyan-400 hover:bg-white/5"
+                }`}
+              >
+                <span>My Works</span>
+              </Link>
+            )}
+
             {user?.role === "admin" && (
               <Link
                 to="/admin"

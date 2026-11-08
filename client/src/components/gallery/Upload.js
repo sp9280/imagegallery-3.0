@@ -5,7 +5,6 @@ import Alert from "../common/Alert";
 import exifr from "exifr";
 import {
   CloudArrowUpIcon,
-  PhotoIcon,
   SparklesIcon,
   CheckCircleIcon,
   XMarkIcon,

@@ -1,6 +1,5 @@
 // client/src/components/gallery/MediaCard.js
-import React, { useState, useContext, useEffect } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import React, { useState, useEffect } from "react";
 import ImageModal from "./ImageModal";
 import { toggleLike, checkLikeStatus } from "../../services/mediaService";
 import {
@@ -8,7 +7,6 @@ import {
   ArrowDownTrayIcon,
   EyeIcon,
   ChatBubbleLeftIcon,
-  SparklesIcon,
   CameraIcon,
   CpuChipIcon,
   MapPinIcon,
@@ -17,7 +15,6 @@ import {
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 
 const MediaCard = ({ item, onUpdate }) => {
-  const { user } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 

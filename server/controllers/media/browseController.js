@@ -66,18 +66,30 @@ const getCategories = async (req, res) => {
 };
 
 /**
- * Get current user's media (includes hidden media for owner)
+ * Get current user's media (includes both public, private, and hidden media)
+ * If user is admin, they have full access to view all media across all users
  */
 const getUserMedia = async (req, res) => {
   try {
-    const userId = req.user.userId; // From auth middleware
+    const userId = req.user.id || req.user._id || req.user.userId;
+    const query = {};
+
+    // Admin has access to all media if query param all=true or by default in admin studio
+    if (req.user.role === 'admin' && req.query.scope === 'all') {
+      // Fetch all media across platform
+    } else if (req.user.role === 'admin' && req.query.userId) {
+      query.user = req.query.userId;
+    } else {
+      // Regular user: shows ALL their uploaded works (both public and private)
+      query.user = userId;
+    }
     
-    const media = await Media.find({ user: userId })
+    const media = await Media.find(query)
       .populate('user', '_id username email')
       .sort({ createdAt: -1 }); // Newest first
 
-    logger.info(`Retrieved ${media.length} media items for user ${userId}`);
-    response.success(res, 'User media retrieved successfully', { items: media }); // Wrapped in items
+    logger.info(`Retrieved ${media.length} media items for user ${userId} (role: ${req.user.role})`);
+    response.success(res, 'User media retrieved successfully', { items: media });
   } catch (err) {
     logger.error('Error fetching user media:', err);
     response.error(res, 'Failed to fetch user media', 500);

@@ -310,9 +310,15 @@ const uploadMedia = async (req, res) => {
 const deleteMedia = async (req, res) => {
   try {
     const mediaId = req.params.id;
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
+    const isAdmin = req.user.role === 'admin';
 
-    const media = await Media.findOne({ _id: mediaId, user: userId });
+    const query = { _id: mediaId };
+    if (!isAdmin) {
+      query.user = userId;
+    }
+
+    const media = await Media.findOne(query);
     if (!media) {
       return response.error(res, 'Media not found or unauthorized', 404);
     }

@@ -1,76 +1,112 @@
 // client/src/components/gallery/ImageModal.js
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import Comments from "./Comments";
 import HideReasonModal from "./HideReasonModal";
 import mediaService from "../../services/mediaService";
+import {
+  XMarkIcon,
+  HeartIcon as HeartOutline,
+  ArrowDownTrayIcon,
+  ChatBubbleLeftIcon,
+  CameraIcon,
+  CpuChipIcon,
+  MapPinIcon,
+  CalendarDaysIcon,
+  EyeIcon,
+  TrashIcon,
+  EyeSlashIcon,
+  PencilSquareIcon,
+  ArrowTopRightOnSquareIcon,
+  LockClosedIcon,
+  GlobeAltIcon
+} from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 
 const ImageModal = ({ item, onClose, onUpdate }) => {
   const { user } = useContext(AuthContext);
   const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(item.likes || 0);
+  const rawLikes = Array.isArray(item.likes)
+    ? item.likes.length
+    : typeof item.likes === "number"
+    ? item.likes
+    : 0;
+  const [likes, setLikes] = useState(rawLikes);
   const [showComments, setShowComments] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [showHideReasonModal, setShowHideReasonModal] = useState(false);
   const [comments, setComments] = useState(item.comments || []);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [newCommentName, setNewCommentName] = useState("");
+
   const [editedDetails, setEditedDetails] = useState({
-    title: item.title || '',
-    description: item.description || '',
-    photographer: item.metadata?.artist || '',
-    location: item.metadata?.locationText || '',
-    camera: item.metadata?.cameraModel || '',
-    resolution: item.metadata?.resolution || ''
+    title: item.title || "",
+    description: item.description || "",
+    photographer: item.metadata?.artist || "",
+    location: item.metadata?.locationText || "",
+    camera: item.metadata?.cameraModel || "",
+    resolution: item.metadata?.resolution || "",
   });
 
   const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:4000/api";
-  const BACKEND_BASE = API_BASE.replace('/api', '');
-  const fullImageUrl = item.url?.startsWith('http') ? item.url : `${BACKEND_BASE}${item.url}`;
+  const BACKEND_BASE = API_BASE.replace("/api", "");
+  const fullImageUrl = item.url?.startsWith("http")
+    ? item.url
+    : `${BACKEND_BASE}${item.url}`;
 
-  const isOwner = user && user._id === item.user?._id;
-  const isAdmin = user && user.role === 'admin';
+  const isOwner = user && (user._id === item.user?._id || user._id === item.user || user.id === item.user);
+  const isAdmin = user && user.role === "admin";
   const canModerate = isOwner || isAdmin;
 
   const metadata = item.metadata || {};
-  const photographer = metadata.artist || item.user?.username;
+  const photographer = metadata.artist || item.userInfo?.username || item.user?.username || "Artist";
   const captureDate = metadata.captureDate ? new Date(metadata.captureDate) : null;
   const locationText = metadata.locationText || (metadata.location
-    ? `${metadata.location.latitude.toFixed(5)}, ${metadata.location.longitude.toFixed(5)}`
+    ? `${metadata.location.latitude?.toFixed(4)}°, ${metadata.location.longitude?.toFixed(4)}°`
     : null);
   const resolution = metadata.resolution;
-  const hasMetadata = Boolean(
-    metadata.cameraMake ||
-    metadata.cameraModel ||
-    metadata.lensModel ||
-    metadata.exposureTime ||
-    metadata.aperture ||
-    metadata.iso ||
-    metadata.focalLength ||
-    metadata.location ||
-    metadata.locationText ||
-    metadata.resolution ||
-    captureDate ||
-    photographer
-  );
 
-  React.useEffect(() => {
-    const checkLikeStatus = async () => {
-      try {
-        const response = await mediaService.checkLikeStatus(item._id);
-        setLiked(response.data.isLiked);
-      } catch (error) {
-        console.error("Failed to check like status:", error);
-      }
+  useEffect(() => {
+    let isMounted = true;
+    mediaService.checkLikeStatus(item._id)
+      .then((res) => {
+        if (isMounted && res?.isLiked !== undefined) {
+          setLiked(res.isLiked);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
     };
-    checkLikeStatus();
   }, [item._id]);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "unset";
+    };
+  }, [onClose]);
 
   const toggleLike = async () => {
     try {
       setLoading(true);
+      const prevLiked = liked;
+      const prevCount = likes;
+      setLiked(!prevLiked);
+      setLikes(prevLiked ? Math.max(0, prevCount - 1) : prevCount + 1);
+
       const response = await mediaService.toggleLike(item._id);
-      setLiked(response.data.isLiked);
-      setLikes(response.data.likes);
+      if (response?.likes !== undefined) {
+        setLiked(response.isLiked);
+        setLikes(response.likes);
+      }
+      if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Failed to like media:", error);
     } finally {
@@ -81,52 +117,19 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
   const handleDownload = async () => {
     try {
       setLoading(true);
-      
-      // Fetch the image as a blob to bypass CORS issues
       const response = await fetch(fullImageUrl);
       const blob = await response.blob();
-      
-      // Create blob URL
       const blobUrl = window.URL.createObjectURL(blob);
-      
-      // Create download link
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = item.originalName || `download-${Date.now()}${item.mimetype?.includes('image') ? '.jpg' : '.mp4'}`;
+      link.download = item.originalName || `${item.title || "imagegallery"}.jpg`;
       document.body.appendChild(link);
       link.click();
-      
-      // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-
-      // Track download
-      await mediaService.trackDownload(item._id).catch(err => console.log('Download tracking failed'));
-      
-      alert('Download started!');
+      await mediaService.trackDownload(item._id).catch(() => {});
     } catch (error) {
-      console.error("Failed to download:", error);
-      alert('Download failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleHideClick = () => {
-    setShowHideReasonModal(true);
-  };
-
-  const handleHideConfirm = async (hideSettings) => {
-    if (!canModerate) return;
-    try {
-      setLoading(true);
-      const response = await mediaService.toggleHide(item._id, hideSettings);
-      if (onUpdate) onUpdate();
-      alert(`${response.message || 'Media visibility updated'}`);
-      onClose();
-    } catch (error) {
-      console.error("Failed to update visibility:", error);
-      alert(error.response?.data?.message || "Failed to update visibility");
+      window.open(fullImageUrl, "_blank");
     } finally {
       setLoading(false);
     }
@@ -134,415 +137,423 @@ const ImageModal = ({ item, onClose, onUpdate }) => {
 
   const handleDelete = async () => {
     if (!canModerate) return;
-    if (!window.confirm('Are you sure you want to delete this media? This action cannot be undone.')) return;
-    
+    if (!window.confirm("Are you sure you want to delete this media? This action cannot be undone.")) return;
     try {
       await mediaService.deleteMedia(item._id);
       if (onUpdate) onUpdate();
-      alert("Media deleted successfully");
       onClose();
     } catch (error) {
-      console.error("Failed to delete:", error);
       alert("Failed to delete media");
+    }
+  };
+
+  const handleHideConfirm = async (hideSettings) => {
+    if (!canModerate) return;
+    try {
+      await mediaService.toggleHide(item._id, hideSettings);
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      alert("Failed to update visibility");
     }
   };
 
   const handleSaveDetails = async () => {
     if (!canModerate) return;
-    
     try {
       const updates = {
         title: editedDetails.title,
         description: editedDetails.description,
         metadata: {
-          ...item.metadata,
+          ...metadata,
           artist: editedDetails.photographer || undefined,
           locationText: editedDetails.location || undefined,
           cameraModel: editedDetails.camera || undefined,
-          resolution: editedDetails.resolution || undefined
-        }
+          resolution: editedDetails.resolution || undefined,
+        },
       };
-      
       await mediaService.editMedia(item._id, updates);
       if (onUpdate) onUpdate();
-      alert("Details updated successfully");
       setIsEditingDetails(false);
-      onClose();
     } catch (error) {
-      console.error("Failed to update details:", error);
       alert("Failed to update details");
     }
   };
 
-  const handleAddComment = async (commentData) => {
+  const handleAddCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newCommentText.trim()) return;
     try {
-      const response = await mediaService.addComment(item._id, {
-        text: commentData.text,
-        name: commentData.name,
-        email: commentData.email,
+      const name = user ? user.username : (newCommentName.trim() || "Guest");
+      await mediaService.addComment(item._id, {
+        text: newCommentText.trim(),
+        name,
+        email: user?.email || "guest@example.com",
       });
-      
-      // Add new comment to local state immediately for instant update
+
       const newComment = {
-        text: commentData.text,
-        username: user?.username,
-        name: commentData.name,
-        createdAt: new Date().toISOString()
+        text: newCommentText.trim(),
+        username: name,
+        createdAt: new Date().toISOString(),
       };
       setComments([...comments, newComment]);
-      
+      setNewCommentText("");
       if (onUpdate) onUpdate();
-      setShowComments(false);
-    } catch (error) {
-      console.error("Failed to add comment:", error);
+    } catch (err) {
       alert("Failed to add comment");
     }
   };
 
-  React.useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [onClose]);
-
-  React.useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
   return (
-    <div className="image-modal-overlay" onClick={onClose} style={{ zIndex: 9999 }}>
-      <div className="image-modal-container" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
-        <button className="modal-close-btn" onClick={onClose} title="Close (ESC)">
-          ✕
-        </button>
+    <div
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-2xl flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-7xl h-[94vh] max-h-[920px] bg-[#070914] text-white rounded-[2rem] border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.9)] flex flex-col md:flex-row overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ========================================================
+            LEFT HAND SIDE: THE IMAGE DISPLAY (Viewport ~60-65%)
+        ======================================================== */}
+        <div className="w-full md:w-[60%] lg:w-[65%] h-[45vh] md:h-full bg-black/70 flex items-center justify-center relative p-4 sm:p-8 select-none overflow-hidden">
+          {/* Ambient Image Glow Background */}
+          <div
+            className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110 pointer-events-none"
+            style={{ backgroundImage: `url(${fullImageUrl})` }}
+          />
 
-        <div className="image-modal-content">
-          <div className="modal-image-section">
-            <img 
-              src={fullImageUrl} 
-              alt={item.title} 
-              className="modal-image"
-              onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Found';
-              }}
-            />
+          {/* High-Resolution Picture */}
+          <img
+            src={fullImageUrl}
+            alt={item.title || "Gallery photo"}
+            className="relative z-10 max-w-full max-h-full object-contain rounded-2xl shadow-2xl transition-transform duration-300"
+            onError={(e) => {
+              e.target.src =
+                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80";
+            }}
+          />
+
+          {/* Top Floating Left Badges on Picture */}
+          <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 pointer-events-none">
+            {metadata.isAiGenerated ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-950/80 backdrop-blur-md text-pink-300 border border-pink-500/40 shadow-lg">
+                <CpuChipIcon className="w-4 h-4 text-pink-400" />
+                <span>{metadata.aiModel || "AI Generated"}</span>
+              </span>
+            ) : metadata.cameraModel ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-950/80 backdrop-blur-md text-cyan-300 border border-cyan-400/40 shadow-lg">
+                <CameraIcon className="w-4 h-4 text-cyan-400" />
+                <span>{metadata.cameraModel}</span>
+              </span>
+            ) : null}
+
+            {resolution && (
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-black/70 backdrop-blur-md text-slate-300 border border-white/10">
+                {resolution}
+              </span>
+            )}
           </div>
 
-          <div className="modal-details-section">
-            <div className="modal-header">
-              <h2 className="modal-title">{item.title}</h2>
-              <div className="modal-meta">
-                <span className="modal-category">#{item.category}</span>
-                {item.license && <span className="modal-license">{item.license}</span>}
+          {/* Bottom Floating Controls on Picture */}
+          <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+            <span className="text-[11px] text-white/75 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+              {item.isPublic !== false ? (
+                <span className="flex items-center gap-1 text-emerald-400">
+                  <GlobeAltIcon className="w-3.5 h-3.5" /> Public Work
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-amber-400">
+                  <LockClosedIcon className="w-3.5 h-3.5" /> Private Work
+                </span>
+              )}
+            </span>
+
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <a
+                href={fullImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-full bg-slate-900/80 hover:bg-white hover:text-black text-white backdrop-blur-md border border-white/10 transition-all shadow-lg"
+                title="Open original high-res image"
+              >
+                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+              </a>
+              <button
+                onClick={handleDownload}
+                className="p-2.5 rounded-full bg-cyan-500/80 hover:bg-cyan-400 text-slate-950 font-bold backdrop-blur-md transition-all shadow-lg"
+                title="Download Photo"
+              >
+                <ArrowDownTrayIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================
+            RIGHT HAND SIDE: THE DETAILS INSPECTOR (~35-40%)
+        ======================================================== */}
+        <div className="w-full md:w-[40%] lg:w-[35%] h-[49vh] md:h-full flex flex-col bg-[#0b0e1e] border-t md:border-t-0 md:border-l border-white/10 overflow-hidden">
+          {/* Header Bar */}
+          <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+            {/* Creator Pill */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-sm shadow-md shrink-0">
+                {photographer.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-white truncate">
+                  {photographer}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate">
+                  Uploaded {new Date(item.createdAt).toLocaleDateString()}
+                </p>
               </div>
             </div>
 
-            {item.description && (
-              <div className="modal-description">
-                <p>{item.description}</p>
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Close (ESC)"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Scrollable Details Body */}
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6 scrollbar-thin">
+            {/* Title & Category */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-400/10 text-cyan-300 border border-cyan-400/20 uppercase tracking-wider">
+                  #{item.category}
+                </span>
+                {item.license && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/5 text-slate-400 border border-white/10">
+                    {item.license}
+                  </span>
+                )}
               </div>
+              <h2 className="text-2xl font-black text-white tracking-tight">
+                {item.title}
+              </h2>
+            </div>
+
+            {/* Description */}
+            {item.description && (
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                {item.description}
+              </p>
             )}
 
+            {/* Tags */}
             {item.tags && item.tags.length > 0 && (
-              <div className="modal-tags">
-                {item.tags.map((tag, idx) => (
-                  <span key={idx} className="modal-tag">{tag}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {item.tags.map((t, i) => (
+                  <span
+                    key={i}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white/5 text-slate-300 border border-white/10"
+                  >
+                    #{t}
+                  </span>
                 ))}
               </div>
             )}
 
-            {hasMetadata && (
-              <div className="modal-metadata">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="metadata-title">Shot Details (Image DNA)</h3>
-                  {metadata.isAiGenerated ? (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-400 border border-pink-500/40">
-                      🤖 AI Generated ({metadata.aiModel || "Generative AI"})
+            {/* ========================================================
+                SHOT DETAILS / IMAGE DNA (Camera, F-Stop, Focus, Date, AI)
+            ======================================================== */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <CameraIcon className="w-4 h-4" />
+                  <span>Technical Shot Details</span>
+                </span>
+                {metadata.isAiGenerated ? (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/40">
+                    AI Generated
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    Optical Capture
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 text-xs">
+                {metadata.cameraModel && (
+                  <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Camera</span>
+                    <span className="font-bold text-white truncate block">{metadata.cameraModel}</span>
+                  </div>
+                )}
+                {metadata.cameraType && (
+                  <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Camera Type</span>
+                    <span className="font-bold text-white truncate block">{metadata.cameraType}</span>
+                  </div>
+                )}
+                {metadata.aperture && (
+                  <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Aperture</span>
+                    <span className="font-bold text-cyan-300">f/{metadata.aperture}</span>
+                  </div>
+                )}
+                {metadata.focalLength && (
+                  <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Focal Length</span>
+                    <span className="font-bold text-white">{metadata.focalLength}mm</span>
+                  </div>
+                )}
+                {resolution && (
+                  <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Resolution</span>
+                    <span className="font-bold text-white">{resolution}</span>
+                  </div>
+                )}
+                {captureDate && (
+                  <div className="bg-white/5 p-2.5 rounded-xl border border-white/5">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Captured Date</span>
+                    <span className="font-bold text-white truncate block">
+                      {captureDate.toLocaleDateString()}
                     </span>
-                  ) : (
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                      📸 Authentic Optical Capture
-                    </span>
-                  )}
-                </div>
-                <div className="metadata-grid">
-                  {(metadata.cameraMake || metadata.cameraModel) && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Camera</span>
-                      <span className="metadata-value">{[metadata.cameraMake, metadata.cameraModel].filter(Boolean).join(' ')}</span>
+                  </div>
+                )}
+                {locationText && (
+                  <div className="col-span-2 bg-white/5 p-2.5 rounded-xl border border-white/5 flex items-center gap-2">
+                    <MapPinIcon className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-slate-400 block font-semibold">Location / GPS</span>
+                      <span className="font-bold text-white truncate block">{locationText}</span>
                     </div>
-                  )}
-                  {metadata.cameraType && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Camera Type</span>
-                      <span className="metadata-value">{metadata.cameraType}</span>
+                  </div>
+                )}
+                {metadata.aiModel && (
+                  <div className="col-span-2 bg-pink-950/20 p-2.5 rounded-xl border border-pink-500/30 flex items-center gap-2">
+                    <CpuChipIcon className="w-4 h-4 text-pink-400 shrink-0" />
+                    <div>
+                      <span className="text-[10px] text-pink-300 block font-semibold">AI Generator Engine</span>
+                      <span className="font-bold text-white">{metadata.aiModel}</span>
                     </div>
-                  )}
-                  {metadata.lensModel && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Lens</span>
-                      <span className="metadata-value">{metadata.lensModel}</span>
-                    </div>
-                  )}
-                  {photographer && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Photographer</span>
-                      <span className="metadata-value">{photographer}</span>
-                    </div>
-                  )}
-                  {captureDate && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Captured Date/Time</span>
-                      <span className="metadata-value">{captureDate.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {metadata.exposureTime && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Shutter Speed</span>
-                      <span className="metadata-value">{metadata.exposureTime}</span>
-                    </div>
-                  )}
-                  {metadata.aperture && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Aperture</span>
-                      <span className="metadata-value">f/{metadata.aperture}</span>
-                    </div>
-                  )}
-                  {metadata.focalLength && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Focus / Focal Length</span>
-                      <span className="metadata-value">{metadata.focalLength}mm</span>
-                    </div>
-                  )}
-                  {metadata.iso && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">ISO</span>
-                      <span className="metadata-value">{metadata.iso}</span>
-                    </div>
-                  )}
-                  {locationText && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Location / GPS</span>
-                      <span className="metadata-value">{locationText}</span>
-                    </div>
-                  )}
-                  {resolution && (
-                    <div className="metadata-item">
-                      <span className="metadata-label">Resolution</span>
-                      <span className="metadata-value">{resolution}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="modal-user-info">
-              <span className="modal-user">By: {item.user?.username || 'Anonymous'}</span>
-              <span className="modal-date">{new Date(item.createdAt).toLocaleDateString()}</span>
-            </div>
-
-            <div className="modal-stats">
-              <div className="stat-item">
-                <span className="stat-icon">♥</span>
-                <span className="stat-label">Likes</span>
-                <span className="stat-value">{likes}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-icon">💬</span>
-                <span className="stat-label">Comments</span>
-                <span className="stat-value">{comments.length}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-icon">↓</span>
-                <span className="stat-label">Downloads</span>
-                <span className="stat-value">{item.downloads || 0}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="modal-actions">
-              <button
-                className={`modal-action-btn like-btn ${liked ? "liked" : ""}`}
-                onClick={toggleLike}
-                disabled={loading}
-              >
-                {liked ? "Liked" : "Like"}
-              </button>
-
-              <button
-                className="modal-action-btn comment-btn"
-                onClick={() => setShowComments(true)}
-              >
-                Comment
-              </button>
-
-              <button
-                className="modal-action-btn download-btn"
-                onClick={handleDownload}
-              >
-                Download
-              </button>
-
-              <button
-                className="modal-action-btn share-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href + `?media=${item._id}`);
-                  alert('Link copied to clipboard!');
-                }}
-              >
-                Share
-              </button>
-            </div>
-
+            {/* Moderation Actions (Owner or Admin) */}
             {canModerate && (
-              <>
-                <div style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: '#f97316' }}>
-                    Content Management
-                  </h3>
-                </div>
-                <div className="modal-moderator-actions">
-                  <button 
-                    className="modal-action-btn edit-btn" 
-                    onClick={() => setIsEditingDetails(true)}
+              <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">
+                  Creator & Moderation Controls
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setShowHideReasonModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-white/10 transition-colors"
                   >
-                    Edit Details
+                    <EyeSlashIcon className="w-3.5 h-3.5" />
+                    <span>{item.isHidden ? "Unhide Photo" : "Hide Photo"}</span>
                   </button>
-                  <button className="modal-action-btn hide-btn" onClick={handleHideClick}>
-                    {item.isHidden ? "Change Visibility" : "Hide"}
-                  </button>
-                  <button className="modal-action-btn delete-btn" onClick={handleDelete}>
-                    Delete
+                  <button
+                    onClick={handleDelete}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-xs font-semibold text-rose-300 border border-rose-500/30 transition-colors"
+                  >
+                    <TrashIcon className="w-3.5 h-3.5" />
+                    <span>Delete Media</span>
                   </button>
                 </div>
-              </>
+              </div>
             )}
+
+            {/* Community Comments Section */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <ChatBubbleLeftIcon className="w-4 h-4 text-cyan-400" />
+                  <span>Comments ({comments.length})</span>
+                </h3>
+              </div>
+
+              {/* Add Comment Form */}
+              <form onSubmit={handleAddCommentSubmit} className="space-y-2">
+                {!user && (
+                  <input
+                    type="text"
+                    placeholder="Your name..."
+                    value={newCommentName}
+                    onChange={(e) => setNewCommentName(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                  />
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add an appreciative thought or technique question..."
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    className="flex-1 px-3.5 py-2.5 text-xs rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all shrink-0 cursor-pointer"
+                  >
+                    Post
+                  </button>
+                </div>
+              </form>
+
+              {/* Comments List */}
+              <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                {comments.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic">No comments yet. Be the first to share your thoughts!</p>
+                ) : (
+                  comments.map((c, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-cyan-300">{c.username || c.name || "Community Member"}</span>
+                        <span className="text-[10px] text-slate-500">{new Date(c.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-xs text-slate-200">{c.text}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Action Footer Bar */}
+          <div className="p-4 sm:p-5 border-t border-white/10 bg-[#070914] flex items-center justify-between gap-3 shrink-0">
+            <button
+              onClick={toggleLike}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer"
+            >
+              {liked ? (
+                <HeartSolid className="w-5 h-5 text-rose-500" />
+              ) : (
+                <HeartOutline className="w-5 h-5 text-slate-400 hover:text-rose-500" />
+              )}
+              <span className="text-xs font-bold">{likes} {likes === 1 ? "Like" : "Likes"}</span>
+            </button>
+
+            <button
+              onClick={handleDownload}
+              className="flex-1 max-w-xs flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white font-bold text-xs shadow-[0_0_20px_rgba(0,245,212,0.25)] transition-all cursor-pointer"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              <span>Download High-Res</span>
+            </button>
           </div>
         </div>
-
-        {showComments && (
-          <div className="nested-comments-modal">
-            <Comments
-              mediaId={item._id}
-              comments={comments}
-              onClose={() => setShowComments(false)}
-              onAddComment={handleAddComment}
-              isPublic={item.isPublic}
-            />
-          </div>
-        )}
-
-        {isEditingDetails && canModerate && (
-          <div className="nested-comments-modal">
-            <div className="modal-window" style={{ maxWidth: '600px' }}>
-              <div className="modal-header">
-                <h3>Edit Media Details</h3>
-                <button className="close-btn" onClick={() => setIsEditingDetails(false)}>×</button>
-              </div>
-              <div className="edit-details-form" style={{ padding: '20px' }}>
-                <div className="form-group" style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Title</label>
-                  <input
-                    type="text"
-                    value={editedDetails.title}
-                    onChange={(e) => setEditedDetails({...editedDetails, title: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Description</label>
-                  <textarea
-                    value={editedDetails.description}
-                    onChange={(e) => setEditedDetails({...editedDetails, description: e.target.value})}
-                    rows="3"
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Photographer</label>
-                  <input
-                    type="text"
-                    value={editedDetails.photographer}
-                    onChange={(e) => setEditedDetails({...editedDetails, photographer: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Location</label>
-                  <input
-                    type="text"
-                    value={editedDetails.location}
-                    onChange={(e) => setEditedDetails({...editedDetails, location: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Camera</label>
-                  <input
-                    type="text"
-                    value={editedDetails.camera}
-                    onChange={(e) => setEditedDetails({...editedDetails, camera: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                  />
-                </div>
-                <div className="form-group" style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Resolution</label>
-                  <input
-                    type="text"
-                    value={editedDetails.resolution}
-                    onChange={(e) => setEditedDetails({...editedDetails, resolution: e.target.value})}
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                  <button
-                    onClick={handleSaveDetails}
-                    style={{ 
-                      flex: 1, 
-                      padding: '10px', 
-                      background: 'linear-gradient(to right, #f97316, #d97706)', 
-                      color: 'white', 
-                      border: 'none', 
-                      borderRadius: '8px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onClick={() => setIsEditingDetails(false)}
-                    style={{ 
-                      flex: 1, 
-                      padding: '10px', 
-                      background: '#6b7280', 
-                      color: 'white', 
-                      border: 'none', 
-                      borderRadius: '8px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Hide Reason Modal */}
-      <HideReasonModal
-        isOpen={showHideReasonModal}
-        onClose={() => setShowHideReasonModal(false)}
-        onConfirm={handleHideConfirm}
-        currentHideLevel={item.hideLevel || 'visible'}
-      />
+      {showHideReasonModal && (
+        <HideReasonModal
+          item={item}
+          onClose={() => setShowHideReasonModal(false)}
+          onConfirm={handleHideConfirm}
+        />
+      )}
     </div>
   );
 };
