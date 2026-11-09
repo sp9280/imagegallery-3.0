@@ -10,7 +10,8 @@ import {
   EyeIcon,
   EyeSlashIcon,
   ArrowRightIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 
 const Register = () => {
@@ -71,25 +72,45 @@ const Register = () => {
 
   return (
     <div className="min-h-[75vh] flex items-center justify-center py-10 px-4">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl transition-all">
+      {/* Ambient background glow */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none -z-10">
+        <div className="w-96 h-96 bg-purple-500/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-md space-y-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl p-8 sm:p-10 rounded-[2rem] border border-slate-200/80 dark:border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] transition-all animate-fade-in-up">
         {/* Brand Header */}
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-500/25">
-            <PhotoIcon className="w-7 h-7" />
+        <div className="text-center space-y-4">
+          <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-cyan-400 via-violet-500 to-pink-500 flex items-center justify-center text-white mx-auto shadow-[0_0_25px_rgba(168,85,247,0.3)]">
+            <PhotoIcon className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-            {step === "register" ? "Create Account" : "Verify Your Email"}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {step === "register"
-              ? "Join the visual community and share your photography worldwide."
-              : `Enter the verification code sent to ${formData.email}`}
-          </p>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-400/10 border border-violet-400/30 text-[11px] font-bold text-violet-400">
+              <SparklesIcon className="w-3 h-3" />
+              <span>Join the Creative Collective</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              {step === "register" ? (
+                <>
+                  Create{" "}
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-violet-400 to-pink-400">
+                    Account
+                  </span>
+                </>
+              ) : (
+                "Verify Your Email"
+              )}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              {step === "register"
+                ? "Join the visual community and share your photography worldwide."
+                : `Enter the verification code sent to ${formData.email}`}
+            </p>
+          </div>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-medium">
+          <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-medium animate-fade-in-down">
             {error}
           </div>
         )}
@@ -100,8 +121,8 @@ const Register = () => {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Username
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-cyan-400 transition-colors">
                   <UserIcon className="w-4 h-4" />
                 </div>
                 <input
@@ -111,7 +132,7 @@ const Register = () => {
                   value={formData.username}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                 />
               </div>
             </div>
@@ -120,8 +141,8 @@ const Register = () => {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Email Address
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-cyan-400 transition-colors">
                   <EnvelopeIcon className="w-4 h-4" />
                 </div>
                 <input
@@ -131,7 +152,7 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                 />
               </div>
             </div>
@@ -140,8 +161,8 @@ const Register = () => {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-cyan-400 transition-colors">
                   <LockClosedIcon className="w-4 h-4" />
                 </div>
                 <input
@@ -151,12 +172,12 @@ const Register = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-10 pr-10 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-cyan-400 dark:hover:text-cyan-400 transition-colors"
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="w-4 h-4" />
@@ -170,10 +191,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-2 py-3.5 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white font-bold text-sm shadow-[0_0_25px_rgba(168,85,247,0.25)] hover:shadow-[0_0_35px_rgba(168,85,247,0.35)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <span>{loading ? "Creating Account..." : "Join ImageGallery 3.0"}</span>
-              <ArrowRightIcon className="w-4 h-4" />
+              {!loading && <ArrowRightIcon className="w-4 h-4" />}
             </button>
           </form>
         ) : (
@@ -182,8 +203,8 @@ const Register = () => {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Verification Code
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-cyan-400 transition-colors">
                   <CheckBadgeIcon className="w-4 h-4" />
                 </div>
                 <input
@@ -193,7 +214,7 @@ const Register = () => {
                   value={verificationData.code}
                   onChange={handleVerificationChange}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all tracking-widest text-center"
                 />
               </div>
             </div>
@@ -201,9 +222,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
+              className="w-full py-3.5 rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 hover:opacity-95 text-white font-bold text-sm shadow-[0_0_25px_rgba(0,245,212,0.25)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              {loading ? "Verifying..." : "Verify & Complete Registration"}
+              <span>{loading ? "Verifying..." : "Verify & Complete Registration"}</span>
+              {!loading && <ArrowRightIcon className="w-4 h-4" />}
             </button>
           </form>
         )}
@@ -214,14 +236,14 @@ const Register = () => {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="font-bold text-cyan-500 dark:text-cyan-400 hover:underline"
             >
               Sign in
             </Link>
           </p>
           <Link
             to="/"
-            className="inline-block text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="inline-block text-xs font-semibold text-slate-400 hover:text-cyan-400 dark:hover:text-cyan-400 transition-colors"
           >
             ← Back to Gallery
           </Link>

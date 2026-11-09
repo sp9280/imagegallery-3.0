@@ -113,22 +113,22 @@ const Home = () => {
       ======================================================== */}
       <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#070913] via-[#0e1222] to-[#080b18] text-white p-8 sm:p-14 md:p-20 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] border border-white/10">
         {/* Luminous Aurora Ambient Blurs */}
-        <div className="absolute top-0 right-1/4 w-[32rem] h-[32rem] bg-cyan-500/15 rounded-full blur-[110px] pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-[32rem] h-[32rem] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-0 right-1/4 w-[32rem] h-[32rem] bg-cyan-500/15 rounded-full blur-[110px] pointer-events-none animate-float" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-0 left-1/4 w-[32rem] h-[32rem] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none animate-float" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[100px] pointer-events-none animate-float" style={{ animationDuration: '12s', animationDelay: '1s' }} />
         
         {/* Subtle Cyber Grid Texture */}
         <div className="absolute inset-0 bg-[radial-gradient(#00f5d4_1px,transparent_1px)] [background-size:32px_32px] opacity-10 pointer-events-none" />
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-7">
           {/* Holographic Badge */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/15 text-xs font-bold text-cyan-300 shadow-[0_0_20px_rgba(0,245,212,0.15)]">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl border border-white/15 text-xs font-bold text-cyan-300 shadow-[0_0_20px_rgba(0,245,212,0.15)] animate-fade-in-down">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f5d4]" />
             <span>ImageGallery 3.0 • Intelligent Visual Sanctuary</span>
           </div>
 
           {/* Majestic Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1]">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1] animate-fade-in-up">
             Where Visual Art{" "}
             <br className="hidden sm:inline" />
             Transcends{" "}
@@ -138,14 +138,15 @@ const Home = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-sm sm:text-lg text-slate-300/90 leading-relaxed max-w-2xl mx-auto font-normal">
+          <p className="text-sm sm:text-lg text-slate-300/90 leading-relaxed max-w-2xl mx-auto font-normal animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             A sanctuary for high-resolution photography and generative artwork. Automatically enriched with camera optics, aperture, resolution, and AI classification.
           </p>
 
           {/* Modern Floating Hero Search */}
           <form
             onSubmit={handleHeroSearchSubmit}
-            className="pt-2 max-w-2xl mx-auto flex items-center bg-white/5 dark:bg-slate-950/70 backdrop-blur-2xl p-2 rounded-2xl border border-white/15 shadow-[0_10px_35px_rgba(0,0,0,0.4)] focus-within:border-cyan-400 focus-within:shadow-[0_0_30px_rgba(0,245,212,0.25)] transition-all duration-300"
+            className="pt-2 max-w-2xl mx-auto flex items-center bg-white/5 dark:bg-slate-950/70 backdrop-blur-2xl p-2 rounded-2xl border border-white/15 shadow-[0_10px_35px_rgba(0,0,0,0.4)] focus-within:border-cyan-400 focus-within:shadow-[0_0_30px_rgba(0,245,212,0.25)] transition-all duration-300 animate-fade-in-up"
+            style={{ animationDelay: '0.4s' }}
           >
             <div className="pl-4 text-cyan-400">
               <MagnifyingGlassIcon className="w-5 h-5" />
@@ -175,7 +176,7 @@ const Home = () => {
           </form>
 
           {/* EXIF DNA Capabilities Pill Strip */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-300">
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-300 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
             <span className="font-semibold text-slate-400">Auto-Detected DNA:</span>
             <span className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
               📷 Camera & Lens
